@@ -79,6 +79,16 @@ export default function App() {
       localStorage.setItem('calcpulse_session', JSON.stringify(user));
     }
     showToast(`Welcome back, ${user.name}! Workspace ready.`, 'success');
+
+    // Fetch history from backend
+    fetch('/api/history')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.history && data.history.length > 0) {
+          setHistory(data.history);
+        }
+      })
+      .catch(() => {});
   };
 
   const handleLogout = () => {
@@ -93,10 +103,23 @@ export default function App() {
       id: Date.now() + Math.random().toString(36).substring(2, 6)
     };
     setHistory((prev) => [entry, ...prev.slice(0, 49)]); // keep up to 50 entries
+
+    // Sync with backend API
+    fetch('/api/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        expression: item.expression,
+        result: item.result,
+        timestamp: item.timestamp,
+        userId: currentUser?.id || 'guest'
+      })
+    }).catch(() => {});
   };
 
   const handleClearHistory = () => {
     setHistory([]);
+    fetch('/api/history', { method: 'DELETE' }).catch(() => {});
     showToast('Calculation tape cleared', 'info');
   };
 

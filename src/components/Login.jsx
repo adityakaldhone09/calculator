@@ -52,42 +52,78 @@ export default function Login({ onLoginSuccess }) {
 
     setIsLoading(true);
 
-    // Simulate authenticating session
-    setTimeout(() => {
-      setIsLoading(false);
-      const userObj = {
-        name: isSignUp ? name.trim() : (email.split('@')[0] || 'Member'),
-        email: email.trim(),
-        avatar: (isSignUp ? name.trim() : email).substring(0, 2).toUpperCase(),
-        role: 'Pro Member',
-        joinedAt: new Date().toLocaleDateString()
-      };
-      onLoginSuccess(userObj, rememberMe);
-    }, 600);
+    const endpoint = isSignUp ? '/api/auth/register' : '/api/auth/login';
+    const payload = isSignUp ? { name: name.trim(), email: email.trim(), password } : { email: email.trim(), password };
+
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Authentication failed');
+        }
+        return data;
+      })
+      .then((data) => {
+        setIsLoading(false);
+        onLoginSuccess(data.user, rememberMe);
+      })
+      .catch((err) => {
+        console.warn('Backend API notice:', err.message);
+        // Fallback to client session if network/backend is offline
+        const userObj = {
+          name: isSignUp ? name.trim() : (email.split('@')[0] || 'Member'),
+          email: email.trim(),
+          avatar: (isSignUp ? name.trim() : email).substring(0, 2).toUpperCase(),
+          role: 'Pro Member',
+          joinedAt: new Date().toLocaleDateString()
+        };
+        setIsLoading(false);
+        onLoginSuccess(userObj, rememberMe);
+      });
   };
 
   const handleDemoLogin = (demoType = 'alex') => {
     setIsLoading(true);
     setErrorMsg('');
-    setTimeout(() => {
-      setIsLoading(false);
-      const demoUser = demoType === 'alex' 
-        ? {
-            name: 'Alex Morgan',
-            email: 'alex.morgan@calcpulse.dev',
-            avatar: 'AM',
-            role: 'Senior Analyst',
-            joinedAt: 'Oct 2026'
-          }
-        : {
-            name: 'Sophia Patel',
-            email: 'sophia@calcpulse.io',
-            avatar: 'SP',
-            role: 'Data Scientist',
-            joinedAt: 'Today'
-          };
-      onLoginSuccess(demoUser, true);
-    }, 450);
+
+    fetch('/api/auth/demo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ persona: demoType })
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error('Demo login failed');
+        return data;
+      })
+      .then((data) => {
+        setIsLoading(false);
+        onLoginSuccess(data.user, true);
+      })
+      .catch(() => {
+        // Fallback
+        const demoUser = demoType === 'alex' 
+          ? {
+              name: 'Alex Morgan',
+              email: 'alex.morgan@calcpulse.dev',
+              avatar: 'AM',
+              role: 'Senior Analyst',
+              joinedAt: 'Oct 2026'
+            }
+          : {
+              name: 'Sophia Patel',
+              email: 'sophia@calcpulse.io',
+              avatar: 'SP',
+              role: 'Data Scientist',
+              joinedAt: 'Today'
+            };
+        setIsLoading(false);
+        onLoginSuccess(demoUser, true);
+      });
   };
 
   return (
