@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
+import Navbar from './components/Navbar';
+import Calculator from './components/Calculator';
+import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
 export default function App() {
@@ -16,18 +19,58 @@ export default function App() {
     return localStorage.getItem('calcpulse_theme') || 'aurora';
   });
 
-  const [toast, setToast] = useState(null);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem('calcpulse_sound');
+    return saved !== null ? saved === 'true' : true;
+  });
 
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('calcpulse_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [selectedCalcValue, setSelectedCalcValue] = useState(null);
+
+  // Sync theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('calcpulse_theme', theme);
   }, [theme]);
+
+  // Sync sound preference
+  useEffect(() => {
+    localStorage.setItem('calcpulse_sound', String(soundEnabled));
+  }, [soundEnabled]);
+
+  // Sync history
+  useEffect(() => {
+    localStorage.setItem('calcpulse_history', JSON.stringify(history));
+  }, [history]);
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => {
       setToast(null);
     }, 3200);
+  };
+
+  const handleToggleTheme = () => {
+    const themes = ['aurora', 'cyber', 'clean'];
+    const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
+    const nextTheme = themes[nextIndex];
+    setTheme(nextTheme);
+    showToast(`Switched theme to ${nextTheme.charAt(0).toUpperCase() + nextTheme.slice(1)}`, 'info');
+  };
+
+  const handleToggleSound = () => {
+    setSoundEnabled(!soundEnabled);
+    showToast(soundEnabled ? 'Tactile sounds muted' : 'Tactile sounds activated', 'info');
   };
 
   const handleLoginSuccess = (user, rememberMe) => {
@@ -44,9 +87,28 @@ export default function App() {
     showToast('Successfully logged out.', 'info');
   };
 
+  const handleAddHistory = (item) => {
+    const entry = {
+      ...item,
+      id: Date.now() + Math.random().toString(36).substring(2, 6)
+    };
+    setHistory((prev) => [entry, ...prev.slice(0, 49)]); // keep up to 50 entries
+  };
+
+  const handleClearHistory = () => {
+    setHistory([]);
+    showToast('Calculation tape cleared', 'info');
+  };
+
+  const handleSelectHistoryItem = (item) => {
+    setSelectedCalcValue(item.result);
+    setIsHistoryOpen(false);
+    showToast(`Loaded ${item.result} into calculator`, 'info');
+  };
+
   return (
     <div className="app-root">
-      {/* Toast Notification Container */}
+      {/* Toast Notification */}
       {toast && (
         <div className={`toast-notification toast-${toast.type} animate-fade-in`}>
           <span>{toast.message}</span>
@@ -56,16 +118,48 @@ export default function App() {
       {!currentUser ? (
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
-        <div className="authenticated-layout">
-          <div className="auth-preview-header">
-            <div>
-              <h2>Welcome, {currentUser.name}</h2>
-              <p>Logged in as {currentUser.email} • {currentUser.role}</p>
+        <div className="workspace-layout">
+          <Navbar 
+            user={currentUser}
+            onLogout={handleLogout}
+            theme={theme}
+            onToggleTheme={handleToggleTheme}
+            soundEnabled={soundEnabled}
+            onToggleSound={handleToggleSound}
+            historyCount={history.length}
+            onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
+            isHistoryOpen={isHistoryOpen}
+          />
+
+          <main className="main-content-area">
+            {/* Calculator Card */}
+            <Calculator 
+              onAddHistory={handleAddHistory}
+              soundEnabled={soundEnabled}
+              onNotify={showToast}
+              externalValue={selectedCalcValue}
+            />
+
+            {/* Quick Keyboard shortcuts hint pill */}
+            <div className="shortcuts-pill-banner">
+              <span className="pill-title">⌨ Quick Shortcuts:</span>
+              <span className="pill-item"><kbd>0-9</kbd> Digits</span>
+              <span className="pill-item"><kbd>+</kbd><kbd>-</kbd><kbd>*</kbd><kbd>/</kbd> Ops</span>
+              <span className="pill-item"><kbd>Enter</kbd> Solve</span>
+              <span className="pill-item"><kbd>Esc</kbd> Clear</span>
+              <span className="pill-item"><kbd>⌫</kbd> Del</span>
             </div>
-            <button className="preview-logout-btn" onClick={handleLogout}>
-              Sign Out
-            </button>
-          </div>
+          </main>
+
+          {/* History Drawer */}
+          <HistoryDrawer 
+            isOpen={isHistoryOpen}
+            onClose={() => setIsHistoryOpen(false)}
+            history={history}
+            onClearHistory={handleClearHistory}
+            onSelectCalculation={handleSelectHistoryItem}
+            onCopyResult={(val) => showToast(`Copied ${val} to clipboard!`, 'success')}
+          />
         </div>
       )}
     </div>

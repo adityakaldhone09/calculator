@@ -1,0 +1,290 @@
+.calculator-workspace {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 16px;
+  width: 100%;
+}
+
+.calculator-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  transition: transform var(--transition-normal);
+}
+
+/* Calc Top Toolbar */
+.calc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calc-mode-selector {
+  display: flex;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  transition: all var(--transition-fast);
+}
+
+.mode-btn.active {
+  background: var(--bg-card-hover);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.calc-top-indicators {
+  display: flex;
+  align-items: center;
+}
+
+.keyboard-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  user-select: none;
+}
+
+/* Display Screen */
+.calc-display-panel {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px 14px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 140px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.calc-sub-expression {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  min-height: 1.4rem;
+  word-break: break-all;
+  user-select: none;
+}
+
+.calc-main-digit {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  word-break: break-all;
+  max-width: 100%;
+  text-align: right;
+  margin: 8px 0;
+  user-select: all;
+  transition: font-size 0.15s ease-out;
+}
+
+.calc-screen-actions {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.screen-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+
+.screen-action-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.screen-action-btn.copied {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* Scientific Grid */
+.calc-sci-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.key-sci {
+  background: rgba(99, 102, 241, 0.1);
+  color: #c7d2fe;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  font-weight: 600;
+  height: 42px;
+  border-radius: var(--radius-sm);
+}
+
+.key-sci:hover {
+  background: rgba(99, 102, 241, 0.2);
+  color: #ffffff;
+}
+
+/* Keypad Grid */
+.calc-keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* Keys */
+.key-btn {
+  height: 60px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+/* Number keys */
+.key-num {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.key-num:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+/* Action keys (AC, +/-, %) */
+.key-action {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #c7d2fe;
+  font-size: 1.15rem;
+}
+
+.key-action:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+/* Operator keys (+, -, ×, ÷) */
+.key-operator {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--op-accent);
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.key-operator:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fde68a;
+  transform: translateY(-1px);
+}
+
+.key-operator.active-operator {
+  background: var(--op-accent);
+  color: #1a1303;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+}
+
+/* Zero key */
+.key-zero {
+  grid-column: span 2;
+  justify-content: flex-start;
+  padding-left: 26px;
+}
+
+/* Equals key (=) */
+.key-equals {
+  background: var(--equals-gradient);
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+}
+
+.key-equals:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Tactile active press effect */
+.active-press {
+  transform: scale(0.93) !important;
+  filter: brightness(1.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .calculator-card {
+    padding: 18px 14px;
+    border-radius: var(--radius-lg);
+  }
+
+  .calc-display-panel {
+    min-height: 120px;
+    padding: 16px 16px 12px 16px;
+  }
+
+  .calc-keypad-grid {
+    gap: 8px;
+  }
+
+  .key-btn {
+    height: 54px;
+    font-size: 1.25rem;
+  }
+}
