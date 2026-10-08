@@ -150,6 +150,12 @@ body::after {
   }
 }
 
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
 /* Base interactive elements */
 button {
   font-family: inherit;
