@@ -176,7 +176,69 @@
 .export-action-btn:hover {
   background: var(--bg-button-hover);
   color: var(--text-primary);
-  border-color: var(--border-medium);
+.export-action-btn.active {
+  background: var(--primary-accent);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+/* Tape Stats Panel */
+.history-stats-panel {
+  padding: 10px 16px;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stat-pill:hover {
+  border-color: #38bdf8;
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.stat-pill .stat-label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stat-pill .stat-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.stat-pill-sm {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-button);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
 }
 
 .history-item-actions {

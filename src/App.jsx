@@ -3,6 +3,8 @@ import Login from './components/Login';
 import Navbar from './components/Navbar';
 import Calculator from './components/Calculator';
 import UnitConverter from './components/UnitConverter';
+import FinancialCalculator from './components/FinancialCalculator';
+import FunctionGrapher from './components/FunctionGrapher';
 import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
@@ -176,7 +178,7 @@ export default function App() {
           />
 
           <main className="main-content-area">
-            {activeTab === 'calculator' ? (
+            {activeTab === 'calculator' && (
               <>
                 {/* Calculator Workspace */}
                 <Calculator 
@@ -196,7 +198,9 @@ export default function App() {
                   <span className="pill-item"><kbd>⌫</kbd> Del</span>
                 </div>
               </>
-            ) : (
+            )}
+
+            {activeTab === 'converter' && (
               /* Unit & Currency Converter Workspace */
               <UnitConverter 
                 soundEnabled={soundEnabled}
@@ -205,6 +209,32 @@ export default function App() {
                   setSelectedCalcValue(val);
                   setActiveTab('calculator');
                   showToast(`Sent ${val} to Calculator!`, 'success');
+                }}
+              />
+            )}
+
+            {activeTab === 'financial' && (
+              /* Financial & Investment Workspace */
+              <FinancialCalculator 
+                soundEnabled={soundEnabled}
+                onNotify={showToast}
+                onSendToCalculator={(val) => {
+                  setSelectedCalcValue(val);
+                  setActiveTab('calculator');
+                  showToast(`Transferred ${val} to Calculator!`, 'success');
+                }}
+              />
+            )}
+
+            {activeTab === 'grapher' && (
+              /* 2D Function Grapher Workspace */
+              <FunctionGrapher 
+                soundEnabled={soundEnabled}
+                onNotify={showToast}
+                onSendToCalculator={(val) => {
+                  setSelectedCalcValue(val);
+                  setActiveTab('calculator');
+                  showToast(`Transferred ${val} to Calculator!`, 'success');
                 }}
               />
             )}

@@ -9,7 +9,9 @@ import {
   Volume2, 
   VolumeX, 
   Sparkles,
-  ArrowRightLeft
+  ArrowRightLeft,
+  DollarSign,
+  LineChart
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -75,6 +77,24 @@ export default function Navbar({
             >
               <ArrowRightLeft size={15} />
               <span>Converter</span>
+            </button>
+            <button
+              type="button"
+              className={`workspace-tab-btn ${activeTab === 'financial' ? 'active' : ''}`}
+              onClick={() => onSelectTab('financial')}
+              title="Financial & Investment Suite"
+            >
+              <DollarSign size={15} />
+              <span>Financial</span>
+            </button>
+            <button
+              type="button"
+              className={`workspace-tab-btn ${activeTab === 'grapher' ? 'active' : ''}`}
+              onClick={() => onSelectTab('grapher')}
+              title="2D Function Grapher"
+            >
+              <LineChart size={15} />
+              <span>Grapher</span>
             </button>
           </div>
         )}

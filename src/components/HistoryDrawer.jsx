@@ -8,7 +8,8 @@ import {
   ArrowUpRight,
   Calculator,
   Search,
-  FileSpreadsheet
+  FileSpreadsheet,
+  BarChart3
 } from 'lucide-react';
 import './HistoryDrawer.css';
 
@@ -25,6 +26,7 @@ export default function HistoryDrawer({
   const [copiedId, setCopiedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [allCopied, setAllCopied] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const handleCopy = (e, item) => {
     e.stopPropagation();
@@ -155,6 +157,16 @@ export default function HistoryDrawer({
             <div className="history-export-actions">
               <button
                 type="button"
+                className={`export-action-btn ${showStats ? 'active' : ''}`}
+                onClick={() => setShowStats(!showStats)}
+                title="Toggle tape numerical statistics"
+              >
+                <BarChart3 size={14} />
+                <span>{showStats ? 'Stats' : 'Stats'}</span>
+              </button>
+
+              <button
+                type="button"
                 className="export-action-btn"
                 onClick={handleCopyAll}
                 title="Copy all tape calculations"
@@ -175,6 +187,49 @@ export default function HistoryDrawer({
             </div>
           </div>
         )}
+
+        {/* Quick Tape Statistics Panel */}
+        {showStats && history.length > 0 && (() => {
+          const validNumbers = history
+            .map((h) => parseFloat(h.result))
+            .filter((n) => !isNaN(n) && isFinite(n));
+          if (validNumbers.length === 0) return null;
+
+          const sum = validNumbers.reduce((a, b) => a + b, 0);
+          const mean = sum / validNumbers.length;
+          const min = Math.min(...validNumbers);
+          const max = Math.max(...validNumbers);
+
+          return (
+            <div className="history-stats-panel animate-fade-in">
+              <div className="stats-row">
+                <button
+                  type="button"
+                  className="stat-pill"
+                  onClick={() => onSelectCalculation?.({ result: String(Number(mean.toFixed(6))) })}
+                  title="Click to load Average into Calculator"
+                >
+                  <span className="stat-label">Average (μ):</span>
+                  <span className="stat-val">{Number(mean.toFixed(4))}</span>
+                </button>
+                <button
+                  type="button"
+                  className="stat-pill"
+                  onClick={() => onSelectCalculation?.({ result: String(Number(sum.toFixed(6))) })}
+                  title="Click to load Total Sum into Calculator"
+                >
+                  <span className="stat-label">Sum (Σ):</span>
+                  <span className="stat-val">{Number(sum.toFixed(4))}</span>
+                </button>
+              </div>
+              <div className="stats-row">
+                <span className="stat-pill-sm">Min: {min}</span>
+                <span className="stat-pill-sm">Max: {max}</span>
+                <span className="stat-pill-sm">Count: {validNumbers.length}</span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* List of calculations */}
         <div className="history-list">
