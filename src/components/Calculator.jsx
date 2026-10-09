@@ -3,10 +3,7 @@ import {
   Delete, 
   Copy, 
   Check, 
-  Sparkles, 
-  Maximize2, 
-  RotateCcw,
-  Zap
+  Sparkles
 } from 'lucide-react';
 import { playKeyClick } from '../utils/audio';
 import './Calculator.css';
@@ -23,8 +20,10 @@ export default function Calculator({
   const [operator, setOperator] = useState(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [mode, setMode] = useState('standard'); // 'standard' | 'scientific'
+  const [angleUnit, setAngleUnit] = useState('DEG'); // 'DEG' | 'RAD'
+  const [memory, setMemory] = useState(0);
+  const [isMemorySet, setIsMemorySet] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [lastResult, setLastResult] = useState(null);
   const [pressedKey, setPressedKey] = useState(null);
 
   // Sync external value when user clicks an entry in the history drawer
@@ -35,15 +34,64 @@ export default function Calculator({
     }
   }, [externalValue]);
 
-  const triggerKeyEffect = (keyIdentifier) => {
+  const triggerKeyEffect = useCallback((keyIdentifier) => {
     setPressedKey(keyIdentifier);
     setTimeout(() => setPressedKey(null), 120);
-  };
+  }, []);
 
-  const handleSound = (type = 'default') => {
+  const handleSound = useCallback((type = 'default') => {
     if (soundEnabled) {
       playKeyClick(type);
     }
+  }, [soundEnabled]);
+
+  // Memory functions
+  const handleMemoryClear = () => {
+    handleSound('clear');
+    triggerKeyEffect('MC');
+    setMemory(0);
+    setIsMemorySet(false);
+    onNotify?.('Memory cleared (MC)', 'info');
+  };
+
+  const handleMemoryRecall = () => {
+    handleSound('memory');
+    triggerKeyEffect('MR');
+    setDisplay(String(memory));
+    setWaitingForOperand(true);
+    onNotify?.(`Recalled memory: ${memory}`, 'info');
+  };
+
+  const handleMemoryAdd = () => {
+    handleSound('memory');
+    triggerKeyEffect('M+');
+    const val = parseFloat(display) || 0;
+    const nextMem = Number((memory + val).toFixed(10));
+    setMemory(nextMem);
+    setIsMemorySet(true);
+    setWaitingForOperand(true);
+    onNotify?.(`Added to memory: +${val} (Total: ${nextMem})`, 'success');
+  };
+
+  const handleMemorySubtract = () => {
+    handleSound('memory');
+    triggerKeyEffect('M-');
+    const val = parseFloat(display) || 0;
+    const nextMem = Number((memory - val).toFixed(10));
+    setMemory(nextMem);
+    setIsMemorySet(true);
+    setWaitingForOperand(true);
+    onNotify?.(`Subtracted from memory: -${val} (Total: ${nextMem})`, 'info');
+  };
+
+  const handleMemoryStore = () => {
+    handleSound('memory');
+    triggerKeyEffect('MS');
+    const val = parseFloat(display) || 0;
+    setMemory(val);
+    setIsMemorySet(true);
+    setWaitingForOperand(true);
+    onNotify?.(`Stored in memory: ${val}`, 'success');
   };
 
   // Input digit
@@ -57,7 +105,7 @@ export default function Calculator({
     } else {
       setDisplay(display === '0' ? String(digit) : display + digit);
     }
-  }, [display, waitingForOperand, soundEnabled]);
+  }, [display, waitingForOperand, handleSound, triggerKeyEffect]);
 
   // Input decimal
   const inputDecimal = useCallback(() => {
@@ -73,7 +121,7 @@ export default function Calculator({
     if (!display.includes('.')) {
       setDisplay(display + '.');
     }
-  }, [display, waitingForOperand, soundEnabled]);
+  }, [display, waitingForOperand, handleSound, triggerKeyEffect]);
 
   // Clear operations
   const clearAll = useCallback(() => {
@@ -84,13 +132,13 @@ export default function Calculator({
     setPrevValue(null);
     setOperator(null);
     setWaitingForOperand(false);
-  }, [soundEnabled]);
+  }, [handleSound, triggerKeyEffect]);
 
   const clearEntry = useCallback(() => {
     handleSound('clear');
     triggerKeyEffect('C');
     setDisplay('0');
-  }, [soundEnabled]);
+  }, [handleSound, triggerKeyEffect]);
 
   // Backspace single character
   const handleBackspace = useCallback(() => {
@@ -104,7 +152,7 @@ export default function Calculator({
     } else {
       setDisplay('0');
     }
-  }, [display, waitingForOperand, soundEnabled]);
+  }, [display, waitingForOperand, handleSound, triggerKeyEffect]);
 
   // Toggle plus / minus sign
   const toggleSign = useCallback(() => {
@@ -114,7 +162,7 @@ export default function Calculator({
     if (!isNaN(val)) {
       setDisplay(String(-val));
     }
-  }, [display, soundEnabled]);
+  }, [display, handleSound, triggerKeyEffect]);
 
   // Percentage
   const handlePercentage = useCallback(() => {
@@ -134,7 +182,7 @@ export default function Calculator({
     const rounded = Number(res.toFixed(10)).toString();
     setDisplay(rounded);
     setWaitingForOperand(true);
-  }, [display, prevValue, operator, soundEnabled]);
+  }, [display, prevValue, operator, handleSound, triggerKeyEffect]);
 
   // Execute binary operation computation
   const calculate = (a, b, op) => {
@@ -184,7 +232,7 @@ export default function Calculator({
 
     setWaitingForOperand(true);
     setOperator(nextOp);
-  }, [display, prevValue, operator, waitingForOperand, soundEnabled]);
+  }, [display, prevValue, operator, waitingForOperand, handleSound, triggerKeyEffect]);
 
   // Equals (=) execution
   const handleEquals = useCallback(() => {
@@ -222,7 +270,16 @@ export default function Calculator({
     setPrevValue(null);
     setOperator(null);
     setWaitingForOperand(true);
-  }, [operator, prevValue, display, soundEnabled, onAddHistory]);
+  }, [operator, prevValue, display, handleSound, triggerKeyEffect, onAddHistory]);
+
+  // Factorial helper
+  const factorial = (n) => {
+    if (n < 0 || !Number.isInteger(n)) return NaN;
+    if (n > 170) return Infinity;
+    let res = 1;
+    for (let i = 2; i <= n; i++) res *= i;
+    return res;
+  };
 
   // Scientific special actions
   const handleSpecial = (type) => {
@@ -235,6 +292,54 @@ export default function Calculator({
     let label = '';
 
     switch (type) {
+      case 'deg_rad':
+        setAngleUnit((prev) => (prev === 'DEG' ? 'RAD' : 'DEG'));
+        onNotify?.(`Switched to ${angleUnit === 'DEG' ? 'Radians (RAD)' : 'Degrees (DEG)'}`, 'info');
+        return;
+      case 'sin': {
+        const rad = angleUnit === 'DEG' ? (current * Math.PI) / 180 : current;
+        const val = Math.sin(rad);
+        res = Math.abs(val) < 1e-12 ? 0 : val;
+        label = `sin(${current}${angleUnit === 'DEG' ? '°' : ''})`;
+        break;
+      }
+      case 'cos': {
+        const rad = angleUnit === 'DEG' ? (current * Math.PI) / 180 : current;
+        const val = Math.cos(rad);
+        res = Math.abs(val) < 1e-12 ? 0 : val;
+        label = `cos(${current}${angleUnit === 'DEG' ? '°' : ''})`;
+        break;
+      }
+      case 'tan': {
+        const rad = angleUnit === 'DEG' ? (current * Math.PI) / 180 : current;
+        if (angleUnit === 'DEG' && Math.abs((Math.abs(current) % 180) - 90) < 1e-9) {
+          setDisplay('Invalid Input');
+          setWaitingForOperand(true);
+          return;
+        }
+        const val = Math.tan(rad);
+        res = Math.abs(val) < 1e-12 ? 0 : val;
+        label = `tan(${current}${angleUnit === 'DEG' ? '°' : ''})`;
+        break;
+      }
+      case 'ln':
+        if (current <= 0) {
+          setDisplay('Invalid Input');
+          setWaitingForOperand(true);
+          return;
+        }
+        res = Math.log(current);
+        label = `ln(${current})`;
+        break;
+      case 'log':
+        if (current <= 0) {
+          setDisplay('Invalid Input');
+          setWaitingForOperand(true);
+          return;
+        }
+        res = Math.log10(current);
+        label = `log(${current})`;
+        break;
       case 'sqrt':
         if (current < 0) {
           setDisplay('Invalid Input');
@@ -244,9 +349,25 @@ export default function Calculator({
         res = Math.sqrt(current);
         label = `√(${current})`;
         break;
+      case 'cbrt':
+        res = Math.cbrt(current);
+        label = `∛(${current})`;
+        break;
       case 'square':
         res = Math.pow(current, 2);
         label = `sqr(${current})`;
+        break;
+      case 'cube':
+        res = Math.pow(current, 3);
+        label = `cube(${current})`;
+        break;
+      case 'exp':
+        res = Math.exp(current);
+        label = `e^(${current})`;
+        break;
+      case 'pow10':
+        res = Math.pow(10, current);
+        label = `10^(${current})`;
         break;
       case 'reciprocal':
         if (current === 0) {
@@ -257,9 +378,31 @@ export default function Calculator({
         res = 1 / current;
         label = `1/(${current})`;
         break;
+      case 'factorial': {
+        if (current < 0 || !Number.isInteger(current)) {
+          setDisplay('Invalid Input');
+          setWaitingForOperand(true);
+          return;
+        }
+        res = factorial(current);
+        label = `${current}!`;
+        break;
+      }
+      case 'abs':
+        res = Math.abs(current);
+        label = `|${current}|`;
+        break;
       case 'pi':
         res = Math.PI;
         label = 'π';
+        break;
+      case 'e':
+        res = Math.E;
+        label = 'e';
+        break;
+      case 'rand':
+        res = Number(Math.random().toFixed(4));
+        label = 'rand()';
         break;
       default:
         return;
@@ -370,8 +513,35 @@ export default function Calculator({
 
         {/* Display Screen */}
         <div className="calc-display-panel">
-          <div className="calc-sub-expression">
-            <span>{expression || '\u00A0'}</span>
+          <div className="calc-display-header">
+            <div className="calc-status-tags">
+              {mode === 'scientific' && (
+                <button 
+                  type="button" 
+                  className="status-pill angle-pill"
+                  onClick={() => handleSpecial('deg_rad')}
+                  title="Click to toggle DEG / RAD mode"
+                  aria-label="Toggle angle unit"
+                >
+                  {angleUnit}
+                </button>
+              )}
+              {isMemorySet && (
+                <button 
+                  type="button" 
+                  className="status-pill memory-pill"
+                  onClick={handleMemoryRecall}
+                  title={`Memory Stored: ${memory} (Click to recall)`}
+                  aria-label="Recall stored memory"
+                >
+                  M: {memory}
+                </button>
+              )}
+            </div>
+
+            <div className="calc-sub-expression">
+              <span>{expression || '\u00A0'}</span>
+            </div>
           </div>
 
           <div 
@@ -405,13 +575,111 @@ export default function Calculator({
           </div>
         </div>
 
-        {/* Scientific row (if active) */}
+        {/* Memory Toolbar Bar */}
+        <div className="calc-memory-bar">
+          <button 
+            type="button" 
+            className={`mem-btn ${pressedKey === 'MC' ? 'active-press' : ''}`}
+            onClick={handleMemoryClear}
+            disabled={!isMemorySet}
+            title="Memory Clear"
+          >
+            MC
+          </button>
+          <button 
+            type="button" 
+            className={`mem-btn ${pressedKey === 'MR' ? 'active-press' : ''}`}
+            onClick={handleMemoryRecall}
+            disabled={!isMemorySet}
+            title="Memory Recall"
+          >
+            MR
+          </button>
+          <button 
+            type="button" 
+            className={`mem-btn ${pressedKey === 'M+' ? 'active-press' : ''}`}
+            onClick={handleMemoryAdd}
+            title="Memory Add"
+          >
+            M+
+          </button>
+          <button 
+            type="button" 
+            className={`mem-btn ${pressedKey === 'M-' ? 'active-press' : ''}`}
+            onClick={handleMemorySubtract}
+            title="Memory Subtract"
+          >
+            M-
+          </button>
+          <button 
+            type="button" 
+            className={`mem-btn ${pressedKey === 'MS' ? 'active-press' : ''}`}
+            onClick={handleMemoryStore}
+            title="Memory Store"
+          >
+            MS
+          </button>
+        </div>
+
+        {/* Extended Scientific Grid (if active) */}
         {mode === 'scientific' && (
           <div className="calc-sci-grid animate-fade-in">
+            {/* Row 1 */}
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'sin' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('sin')}
+              title={`Sine (${angleUnit})`}
+            >
+              sin
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'cos' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('cos')}
+              title={`Cosine (${angleUnit})`}
+            >
+              cos
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'tan' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('tan')}
+              title={`Tangent (${angleUnit})`}
+            >
+              tan
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'ln' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('ln')}
+              title="Natural Logarithm (ln)"
+            >
+              ln
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'log' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('log')}
+              title="Base-10 Logarithm (log)"
+            >
+              log
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'pi' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('pi')}
+              title="Pi (3.14159...)"
+            >
+              π
+            </button>
+
+            {/* Row 2 */}
             <button 
               type="button" 
               className={`key-btn key-sci ${pressedKey === 'sqrt' ? 'active-press' : ''}`}
               onClick={() => handleSpecial('sqrt')}
+              title="Square Root"
             >
               √x
             </button>
@@ -419,6 +687,7 @@ export default function Calculator({
               type="button" 
               className={`key-btn key-sci ${pressedKey === 'square' ? 'active-press' : ''}`}
               onClick={() => handleSpecial('square')}
+              title="Square (x²)"
             >
               x²
             </button>
@@ -426,22 +695,83 @@ export default function Calculator({
               type="button" 
               className={`key-btn key-sci ${pressedKey === '^' ? 'active-press' : ''}`}
               onClick={() => handleOperator('^')}
+              title="Power (xʸ)"
             >
               xʸ
             </button>
             <button 
               type="button" 
+              className={`key-btn key-sci ${pressedKey === 'cube' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('cube')}
+              title="Cube (x³)"
+            >
+              x³
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'factorial' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('factorial')}
+              title="Factorial (n!)"
+            >
+              n!
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'e' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('e')}
+              title="Euler's Constant e (2.71828...)"
+            >
+              e
+            </button>
+
+            {/* Row 3 */}
+            <button 
+              type="button" 
               className={`key-btn key-sci ${pressedKey === 'reciprocal' ? 'active-press' : ''}`}
               onClick={() => handleSpecial('reciprocal')}
+              title="Reciprocal (1/x)"
             >
               1/x
             </button>
             <button 
               type="button" 
-              className={`key-btn key-sci ${pressedKey === 'pi' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('pi')}
+              className={`key-btn key-sci ${pressedKey === 'abs' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('abs')}
+              title="Absolute Value (|x|)"
             >
-              π
+              |x|
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'pow10' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('pow10')}
+              title="Power of 10 (10ˣ)"
+            >
+              10ˣ
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'exp' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('exp')}
+              title="Exponential (eˣ)"
+            >
+              eˣ
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'cbrt' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('cbrt')}
+              title="Cube Root (∛x)"
+            >
+              ∛x
+            </button>
+            <button 
+              type="button" 
+              className={`key-btn key-sci ${pressedKey === 'rand' ? 'active-press' : ''}`}
+              onClick={() => handleSpecial('rand')}
+              title="Random Number (0-1)"
+            >
+              rnd
             </button>
           </div>
         )}

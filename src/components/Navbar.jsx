@@ -8,8 +8,7 @@ import {
   Moon,
   Volume2, 
   VolumeX, 
-  Sparkles,
-  UserCheck
+  Sparkles
 } from 'lucide-react';
 import './Navbar.css';
 

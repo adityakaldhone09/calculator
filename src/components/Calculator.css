@@ -88,6 +88,50 @@
   position: relative;
 }
 
+.calc-display-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calc-status-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+
+.status-pill.angle-pill {
+  color: var(--text-accent);
+  background: var(--bg-button);
+}
+
+.status-pill.angle-pill:hover {
+  background: var(--bg-button-hover);
+  border-color: var(--border-focus);
+}
+
+.status-pill.memory-pill {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.status-pill.memory-pill:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
 .calc-sub-expression {
   font-family: var(--font-mono);
   font-size: 0.95rem;
@@ -95,6 +139,8 @@
   min-height: 1.4rem;
   word-break: break-all;
   user-select: none;
+  text-align: right;
+  flex: 1;
 }
 
 .calc-main-digit {
@@ -117,7 +163,7 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .screen-action-btn {
@@ -129,14 +175,14 @@
   font-size: 0.76rem;
   font-weight: 600;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-button);
   border: 1px solid var(--border-subtle);
   transition: all var(--transition-fast);
 }
 
 .screen-action-btn:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-button-hover);
 }
 
 .screen-action-btn.copied {
@@ -145,11 +191,50 @@
   background: rgba(16, 185, 129, 0.1);
 }
 
+/* Memory Toolbar */
+.calc-memory-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--bg-input);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.mem-btn {
+  flex: 1;
+  height: 32px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-button);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mem-btn:hover:not(:disabled) {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.mem-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* Scientific Grid */
 .calc-sci-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
 }
 
 .key-sci {
@@ -157,9 +242,9 @@
   color: var(--text-accent);
   border: 1px solid var(--border-subtle);
   font-family: var(--font-mono);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  height: 42px;
+  height: 38px;
   border-radius: var(--radius-sm);
 }
 

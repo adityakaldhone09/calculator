@@ -46,6 +46,14 @@ export function playKeyClick(type = 'default') {
       gain.gain.linearRampToValueAtTime(0.001, now + 0.05);
       osc.start(now);
       osc.stop(now + 0.05);
+    } else if (type === 'memory') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.06);
+      gain.gain.setValueAtTime(0.045, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.06);
+      osc.start(now);
+      osc.stop(now + 0.06);
     } else {
       // standard key
       osc.type = 'sine';
