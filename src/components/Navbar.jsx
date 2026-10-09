@@ -4,6 +4,8 @@ import {
   History, 
   LogOut, 
   Palette, 
+  Sun,
+  Moon,
   Volume2, 
   VolumeX, 
   Sparkles,
@@ -22,11 +24,20 @@ export default function Navbar({
   onToggleHistory, 
   isHistoryOpen 
 }) {
-  const getThemeLabel = () => {
-    if (theme === 'cyber') return 'Cyber';
-    if (theme === 'clean') return 'Slate';
-    return 'Aurora';
+  const getThemeInfo = () => {
+    switch (theme) {
+      case 'light':
+        return { label: 'Frost White', Icon: Sun };
+      case 'cyber':
+        return { label: 'Cyber Neon', Icon: Sparkles };
+      case 'clean':
+        return { label: 'Slate Dark', Icon: Moon };
+      default:
+        return { label: 'Aurora Dark', Icon: Palette };
+    }
   };
+
+  const { label: themeLabel, Icon: ThemeIcon } = getThemeInfo();
 
   return (
     <header className="navbar-header">
@@ -60,11 +71,11 @@ export default function Navbar({
             type="button"
             className="nav-action-btn theme-btn"
             onClick={onToggleTheme}
-            title={`Current theme: ${getThemeLabel()} (Click to toggle)`}
+            title={`Current theme: ${themeLabel} (Click to cycle themes)`}
             aria-label="Toggle theme"
           >
-            <Palette size={18} />
-            <span className="theme-text">{getThemeLabel()}</span>
+            <ThemeIcon size={18} />
+            <span className="theme-text">{themeLabel}</span>
           </button>
 
           {/* Calculation History Drawer Button */}

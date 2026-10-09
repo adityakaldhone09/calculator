@@ -34,7 +34,7 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border-subtle);
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-card);
 }
 
 .history-title-group {
@@ -51,7 +51,7 @@
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .history-badge {
@@ -206,7 +206,7 @@
   font-family: var(--font-mono);
   font-size: 1.25rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .equals-sign {
@@ -228,7 +228,7 @@
 
 .history-footer {
   padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--bg-card);
   border-top: 1px solid var(--border-subtle);
   font-size: 0.78rem;
   color: var(--text-muted);

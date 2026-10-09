@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { 
   Lock, 
   Mail, 
@@ -10,11 +9,14 @@ import {
   ShieldCheck, 
   Calculator,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  Sun,
+  Moon,
+  Palette
 } from 'lucide-react';
 import './Login.css';
 
-export default function Login({ onLoginSuccess }) {
+export default function Login({ onLoginSuccess, theme = 'aurora', onToggleTheme }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
@@ -126,9 +128,35 @@ export default function Login({ onLoginSuccess }) {
       });
   };
 
+  const getThemeInfo = () => {
+    switch (theme) {
+      case 'light': return { label: 'Frost White', Icon: Sun };
+      case 'cyber': return { label: 'Cyber Neon', Icon: Sparkles };
+      case 'clean': return { label: 'Slate Dark', Icon: Moon };
+      default: return { label: 'Aurora Dark', Icon: Palette };
+    }
+  };
+
+  const { label: themeLabel, Icon: ThemeIcon } = getThemeInfo();
+
   return (
     <div className="login-wrapper">
       <div className="login-ambient-grid"></div>
+
+      {onToggleTheme && (
+        <div className="login-top-bar">
+          <button
+            type="button"
+            className="login-theme-toggle"
+            onClick={onToggleTheme}
+            title={`Current theme: ${themeLabel} (Click to toggle)`}
+            aria-label="Toggle theme"
+          >
+            <ThemeIcon size={16} />
+            <span>{themeLabel}</span>
+          </button>
+        </div>
+      )}
 
       <div className="login-container animate-fade-in">
         {/* Brand Header */}

@@ -54,7 +54,7 @@
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .brand-glow {
@@ -103,9 +103,9 @@
 }
 
 .nav-action-btn.active {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(99, 102, 241, 0.14);
   border-color: rgba(99, 102, 241, 0.4);
-  color: #c7d2fe;
+  color: var(--accent-primary);
 }
 
 .history-pill {
@@ -131,7 +131,7 @@
   align-items: center;
   gap: 10px;
   padding: 5px 12px 5px 6px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-button);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
 }
@@ -190,16 +190,16 @@
   border-radius: var(--radius-md);
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
+  color: var(--danger-accent);
   font-size: 0.82rem;
   font-weight: 600;
   transition: all var(--transition-fast);
 }
 
 .logout-action-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.18);
   border-color: rgba(239, 68, 68, 0.4);
-  color: #fee2e2;
+  color: var(--danger-accent);
 }
 
 /* Responsive Navbar */

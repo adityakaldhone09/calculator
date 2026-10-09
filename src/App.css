@@ -70,11 +70,12 @@
   gap: 12px;
   margin-top: 20px;
   padding: 8px 18px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-full);
   font-size: 0.78rem;
   color: var(--text-muted);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   user-select: none;
 }
 
@@ -90,14 +91,14 @@
 }
 
 .pill-item kbd {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--bg-button);
+  border: 1px solid var(--border-medium);
   border-radius: 4px;
   padding: 1px 5px;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--text-primary);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 640px) {

@@ -61,11 +61,17 @@ export default function App() {
   };
 
   const handleToggleTheme = () => {
-    const themes = ['aurora', 'cyber', 'clean'];
+    const themes = ['aurora', 'cyber', 'clean', 'light'];
     const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
     const nextTheme = themes[nextIndex];
     setTheme(nextTheme);
-    showToast(`Switched theme to ${nextTheme.charAt(0).toUpperCase() + nextTheme.slice(1)}`, 'info');
+    const themeNames = {
+      aurora: 'Aurora Dark',
+      cyber: 'Cyber Neon',
+      clean: 'Slate Dark',
+      light: 'Frost White'
+    };
+    showToast(`Switched theme to ${themeNames[nextTheme] || nextTheme}`, 'info');
   };
 
   const handleToggleSound = () => {
@@ -139,7 +145,11 @@ export default function App() {
       )}
 
       {!currentUser ? (
-        <Login onLoginSuccess={handleLoginSuccess} />
+        <Login 
+          onLoginSuccess={handleLoginSuccess} 
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+        />
       ) : (
         <div className="workspace-layout">
           <Navbar 
