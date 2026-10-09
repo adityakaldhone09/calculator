@@ -221,6 +221,60 @@ app.get('/api/converter/rates', (req, res) => {
   });
 });
 
+// Financial: Loan & EMI Calculator API
+app.post('/api/financial/emi', (req, res) => {
+  const { principal = 0, annualRate = 0, tenureMonths = 12 } = req.body;
+  const P = parseFloat(principal);
+  const r = (parseFloat(annualRate) / 12) / 100;
+  const n = parseFloat(tenureMonths);
+
+  if (P <= 0 || r <= 0 || n <= 0) {
+    return res.status(400).json({ error: 'Valid principal, annualRate, and tenureMonths are required' });
+  }
+
+  const emi = (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  const totalPayable = emi * n;
+  const totalInterest = totalPayable - P;
+
+  res.json({
+    success: true,
+    monthlyEmi: Number(emi.toFixed(2)),
+    totalInterest: Number(totalInterest.toFixed(2)),
+    totalPayable: Number(totalPayable.toFixed(2)),
+    principalRatio: Number(((P / totalPayable) * 100).toFixed(1)),
+    interestRatio: Number(((totalInterest / totalPayable) * 100).toFixed(1))
+  });
+});
+
+// Financial: Compound Interest / SIP API
+app.post('/api/financial/compound', (req, res) => {
+  const { initialDeposit = 0, monthlyDeposit = 0, annualRate = 0, years = 1, frequency = 12 } = req.body;
+  const P = parseFloat(initialDeposit);
+  const PMT = parseFloat(monthlyDeposit);
+  const r = parseFloat(annualRate) / 100;
+  const t = parseFloat(years);
+  const n = parseFloat(frequency) || 12;
+
+  const lumpSumFV = P * Math.pow(1 + r / n, n * t);
+  const monthlyRate = r / 12;
+  const totalMonths = t * 12;
+  const annuityFV = monthlyRate > 0 
+    ? PMT * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate)
+    : PMT * totalMonths;
+
+  const futureValue = lumpSumFV + annuityFV;
+  const totalInvested = P + (PMT * totalMonths);
+  const totalInterest = Math.max(0, futureValue - totalInvested);
+
+  res.json({
+    success: true,
+    futureValue: Number(futureValue.toFixed(2)),
+    totalInvested: Number(totalInvested.toFixed(2)),
+    totalInterest: Number(totalInterest.toFixed(2)),
+    wealthRatio: totalInvested > 0 ? Number(((totalInterest / futureValue) * 100).toFixed(1)) : 0
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 CalcPulse Backend Server listening on http://localhost:${PORT}`);
   console.log(`📡 Health endpoint: http://localhost:${PORT}/api/health`);
