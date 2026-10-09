@@ -54,6 +54,14 @@ export function playKeyClick(type = 'default') {
       gain.gain.linearRampToValueAtTime(0.001, now + 0.06);
       osc.start(now);
       osc.stop(now + 0.06);
+    } else if (type === 'bit') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(700, now);
+      osc.frequency.exponentialRampToValueAtTime(1100, now + 0.03);
+      gain.gain.setValueAtTime(0.025, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.03);
+      osc.start(now);
+      osc.stop(now + 0.03);
     } else {
       // standard key
       osc.type = 'sine';

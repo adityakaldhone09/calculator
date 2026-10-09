@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Delete, 
   Copy, 
   Check, 
-  Sparkles
+  Sparkles,
+  Cpu,
+  Binary
 } from 'lucide-react';
 import { playKeyClick } from '../utils/audio';
 import './Calculator.css';
@@ -19,20 +21,226 @@ export default function Calculator({
   const [prevValue, setPrevValue] = useState(null);
   const [operator, setOperator] = useState(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
-  const [mode, setMode] = useState('standard'); // 'standard' | 'scientific'
+  const [mode, setMode] = useState('standard'); // 'standard' | 'scientific' | 'programmer'
   const [angleUnit, setAngleUnit] = useState('DEG'); // 'DEG' | 'RAD'
   const [memory, setMemory] = useState(0);
   const [isMemorySet, setIsMemorySet] = useState(false);
   const [copied, setCopied] = useState(false);
   const [pressedKey, setPressedKey] = useState(null);
 
+  // --- Programmer Mode State ---
+  const [progBase, setProgBase] = useState('HEX'); // 'HEX' | 'DEC' | 'OCT' | 'BIN'
+  const [progWordSize, setProgWordSize] = useState(32); // 64 | 32 | 16 | 8
+  const [progVal, setProgVal] = useState(0n);
+  const [progPrevVal, setProgPrevVal] = useState(null);
+  const [progOp, setProgOp] = useState(null);
+  const [progWaitingForOperand, setProgWaitingForOperand] = useState(false);
+  const lastExternalValRef = useRef(null);
+
   // Sync external value when user clicks an entry in the history drawer
   useEffect(() => {
-    if (externalValue !== undefined && externalValue !== null) {
+    if (externalValue !== undefined && externalValue !== null && externalValue !== lastExternalValRef.current) {
+      lastExternalValRef.current = externalValue;
       setDisplay(String(externalValue));
+      try {
+        const parsedInt = BigInt(Math.floor(parseFloat(externalValue) || 0));
+        setProgVal(parsedInt);
+      } catch {
+        // ignore float BigInt error
+      }
       setWaitingForOperand(true);
     }
   }, [externalValue]);
+
+  // Mask helper for word sizes
+  const getMask = useCallback((bits = progWordSize) => {
+    switch (bits) {
+      case 8: return 0xFFn;
+      case 16: return 0xFFFFn;
+      case 32: return 0xFFFFFFFFn;
+      case 64: return 0xFFFFFFFFFFFFFFFFn;
+      default: return 0xFFFFFFFFn;
+    }
+  }, [progWordSize]);
+
+  // Clamp BigInt to word size
+  const clampProgVal = useCallback((val, bits = progWordSize) => {
+    const mask = getMask(bits);
+    return ((val % (mask + 1n)) + (mask + 1n)) % (mask + 1n);
+  }, [getMask, progWordSize]);
+
+  // Mode Switch Handler
+  const handleSelectMode = (newMode) => {
+    if (newMode === mode) return;
+    handleSound('operator');
+    if (newMode === 'programmer') {
+      try {
+        const intVal = BigInt(Math.floor(parseFloat(display) || 0));
+        setProgVal(clampProgVal(intVal));
+      } catch {
+        setProgVal(0n);
+      }
+      setProgOp(null);
+      setProgPrevVal(null);
+      setProgWaitingForOperand(false);
+    } else if (mode === 'programmer') {
+      setDisplay(progVal.toString(10));
+      setWaitingForOperand(true);
+    }
+    setMode(newMode);
+    onNotify?.(`Switched to ${newMode.charAt(0).toUpperCase() + newMode.slice(1)} Mode`, 'info');
+  };
+
+  // Toggle single bit on interactive bitboard
+  const handleToggleBit = (bitIndex) => {
+    handleSound('bit');
+    const mask = getMask();
+    const bitWeight = 1n << BigInt(bitIndex);
+    const nextVal = (progVal ^ bitWeight) & mask;
+    setProgVal(nextVal);
+    onNotify?.(`Toggled Bit ${bitIndex} (Weight: 2^${bitIndex})`, 'info');
+  };
+
+  // Base switcher in Programmer Mode
+  const handleSelectProgBase = (base) => {
+    handleSound('digit');
+    setProgBase(base);
+    onNotify?.(`Switched to ${base} Base`, 'info');
+  };
+
+  // Word size selector
+  const handleSelectWordSize = (bits) => {
+    handleSound('operator');
+    setProgWordSize(bits);
+    setProgVal((prev) => clampProgVal(prev, bits));
+    const labels = { 64: 'QWORD (64-bit)', 32: 'DWORD (32-bit)', 16: 'WORD (16-bit)', 8: 'BYTE (8-bit)' };
+    onNotify?.(`Word Size set to ${labels[bits]}`, 'info');
+  };
+
+  // Programmer digit input
+  const handleProgDigit = (char) => {
+    handleSound('digit');
+    triggerKeyEffect(char);
+    const radixMap = { HEX: 16n, DEC: 10n, OCT: 8n, BIN: 2n };
+    const radix = radixMap[progBase] || 16n;
+    const digitValue = BigInt(parseInt(char, 16));
+
+    if (progWaitingForOperand) {
+      setProgVal(digitValue);
+      setProgWaitingForOperand(false);
+    } else {
+      const nextVal = clampProgVal(progVal * radix + digitValue);
+      setProgVal(nextVal);
+    }
+  };
+
+  // Programmer bitwise operator
+  const handleProgOperator = (op) => {
+    handleSound('operator');
+    triggerKeyEffect(op);
+    const mask = getMask();
+
+    if (op === 'NOT') {
+      const inverted = (~progVal) & mask;
+      setProgVal(inverted);
+      onNotify?.(`Bitwise NOT: ~${progVal.toString(16).toUpperCase()}`, 'info');
+      return;
+    }
+
+    if (progPrevVal === null) {
+      setProgPrevVal(progVal);
+      setExpression(`${formatProgDisplay(progVal, progBase)} ${op} `);
+    } else if (progOp) {
+      if (progWaitingForOperand) {
+        setProgOp(op);
+        setExpression(`${formatProgDisplay(progPrevVal, progBase)} ${op} `);
+        return;
+      }
+      const result = executeProgCalc(progPrevVal, progVal, progOp, mask);
+      setProgVal(result);
+      setProgPrevVal(result);
+      setExpression(`${formatProgDisplay(result, progBase)} ${op} `);
+    }
+
+    setProgOp(op);
+    setProgWaitingForOperand(true);
+  };
+
+  // Programmer calculate
+  const executeProgCalc = (a, b, op, mask) => {
+    switch (op) {
+      case 'AND': return (a & b) & mask;
+      case 'OR': return (a | b) & mask;
+      case 'XOR': return (a ^ b) & mask;
+      case 'Lsh': return (a << (b & 63n)) & mask;
+      case 'Rsh': return (a >> (b & 63n)) & mask;
+      case '+': return (a + b) & mask;
+      case '-': return (a - b) & mask;
+      case '×': return (a * b) & mask;
+      case '÷': return b !== 0n ? (a / b) & mask : 0n;
+      case 'MOD': return b !== 0n ? (a % b) & mask : 0n;
+      default: return b;
+    }
+  };
+
+  // Programmer equals
+  const handleProgEquals = () => {
+    if (!progOp || progPrevVal === null) return;
+    handleSound('equals');
+    triggerKeyEffect('=');
+    const mask = getMask();
+    const result = executeProgCalc(progPrevVal, progVal, progOp, mask);
+    const fullExpr = `${formatProgDisplay(progPrevVal, progBase)} ${progOp} ${formatProgDisplay(progVal, progBase)}`;
+
+    setProgVal(result);
+    setExpression(`${fullExpr} =`);
+    onAddHistory?.({
+      expression: fullExpr,
+      result: `${formatProgDisplay(result, progBase)} (${progBase})`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    });
+
+    setProgPrevVal(null);
+    setProgOp(null);
+    setProgWaitingForOperand(true);
+  };
+
+  // Programmer clear
+  const handleProgClear = () => {
+    handleSound('clear');
+    triggerKeyEffect('AC');
+    setProgVal(0n);
+    setProgPrevVal(null);
+    setProgOp(null);
+    setExpression('');
+    setProgWaitingForOperand(false);
+  };
+
+  // Programmer backspace
+  const handleProgBackspace = () => {
+    handleSound('digit');
+    triggerKeyEffect('backspace');
+    const radixMap = { HEX: 16n, DEC: 10n, OCT: 8n, BIN: 2n };
+    const radix = radixMap[progBase] || 16n;
+    setProgVal((prev) => prev / radix);
+  };
+
+  // Format programmer display string
+  const formatProgDisplay = (val, base) => {
+    switch (base) {
+      case 'HEX': return val.toString(16).toUpperCase();
+      case 'DEC': return val.toString(10);
+      case 'OCT': return val.toString(8);
+      case 'BIN': return val.toString(2);
+      default: return val.toString(10);
+    }
+  };
+
+  // Format binary with 4-bit nibbles
+  const formatNibbleBin = (val, bits) => {
+    const raw = val.toString(2).padStart(bits, '0');
+    return raw.match(/.{1,4}/g)?.join(' ') || raw;
+  };
 
   const triggerKeyEffect = useCallback((keyIdentifier) => {
     setPressedKey(keyIdentifier);
@@ -437,6 +645,56 @@ export default function Calculator({
 
       const { key } = e;
 
+      if (mode === 'programmer') {
+        const upper = key.toUpperCase();
+        if (/^[0-9]$/.test(key)) {
+          const num = Number(key);
+          const valid = (progBase === 'BIN' && num <= 1) || (progBase === 'OCT' && num <= 7) || progBase === 'DEC' || progBase === 'HEX';
+          if (valid) {
+            e.preventDefault();
+            handleProgDigit(key);
+          }
+        } else if (progBase === 'HEX' && /^[A-F]$/.test(upper)) {
+          e.preventDefault();
+          handleProgDigit(upper);
+        } else if (key === '+' || key === '-') {
+          e.preventDefault();
+          handleProgOperator(key);
+        } else if (key === '*') {
+          e.preventDefault();
+          handleProgOperator('×');
+        } else if (key === '/') {
+          e.preventDefault();
+          handleProgOperator('÷');
+        } else if (key === '%') {
+          e.preventDefault();
+          handleProgOperator('MOD');
+        } else if (key === '&') {
+          e.preventDefault();
+          handleProgOperator('AND');
+        } else if (key === '|') {
+          e.preventDefault();
+          handleProgOperator('OR');
+        } else if (key === '^') {
+          e.preventDefault();
+          handleProgOperator('XOR');
+        } else if (key === '~') {
+          e.preventDefault();
+          handleProgOperator('NOT');
+        } else if (key === '=' || key === 'Enter') {
+          e.preventDefault();
+          handleProgEquals();
+        } else if (key === 'Backspace') {
+          e.preventDefault();
+          handleProgBackspace();
+        } else if (key === 'Escape') {
+          e.preventDefault();
+          handleProgClear();
+        }
+        return;
+      }
+
+      // Standard / Scientific keyboard handling
       if (/^[0-9]$/.test(key)) {
         e.preventDefault();
         inputDigit(Number(key));
@@ -469,38 +727,68 @@ export default function Calculator({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [inputDigit, inputDecimal, handleOperator, handleEquals, handleBackspace, clearAll, handlePercentage]);
+  }, [
+    mode,
+    progBase,
+    handleProgDigit,
+    handleProgOperator,
+    handleProgEquals,
+    handleProgBackspace,
+    handleProgClear,
+    inputDigit,
+    inputDecimal,
+    handleOperator,
+    handleEquals,
+    handleBackspace,
+    clearAll,
+    handlePercentage
+  ]);
 
   // Calculate dynamic font size to prevent text overflow for long numbers
   const getDisplayFontSize = () => {
-    const len = display.length;
-    if (len > 14) return '1.5rem';
-    if (len > 10) return '2rem';
-    if (len > 8) return '2.5rem';
+    const textVal = mode === 'programmer' ? formatProgDisplay(progVal, progBase) : display;
+    const len = textVal.length;
+    if (len > 16) return '1.35rem';
+    if (len > 12) return '1.75rem';
+    if (len > 8) return '2.3rem';
     return '3.1rem';
+  };
+
+  const isProgDigitDisabled = (d) => {
+    if (progBase === 'BIN') return d > 1;
+    if (progBase === 'OCT') return d > 7;
+    return false;
   };
 
   return (
     <div className="calculator-workspace animate-fade-in">
       {/* Main Glassmorphic Calculator Container */}
-      <div className="calculator-card">
+      <div className={`calculator-card ${mode === 'programmer' ? 'mode-programmer' : ''}`}>
         {/* Top Toolbar */}
         <div className="calc-toolbar">
           <div className="calc-mode-selector">
             <button
               type="button"
               className={`mode-btn ${mode === 'standard' ? 'active' : ''}`}
-              onClick={() => setMode('standard')}
+              onClick={() => handleSelectMode('standard')}
             >
               Standard
             </button>
             <button
               type="button"
               className={`mode-btn ${mode === 'scientific' ? 'active' : ''}`}
-              onClick={() => setMode('scientific')}
+              onClick={() => handleSelectMode('scientific')}
             >
               <Sparkles size={13} />
               <span>Scientific</span>
+            </button>
+            <button
+              type="button"
+              className={`mode-btn ${mode === 'programmer' ? 'active' : ''}`}
+              onClick={() => handleSelectMode('programmer')}
+            >
+              <Cpu size={13} />
+              <span>Programmer</span>
             </button>
           </div>
 
@@ -526,7 +814,12 @@ export default function Calculator({
                   {angleUnit}
                 </button>
               )}
-              {isMemorySet && (
+              {mode === 'programmer' && (
+                <span className="status-pill prog-badge">
+                  {progBase} • {progWordSize}-BIT
+                </span>
+              )}
+              {isMemorySet && mode !== 'programmer' && (
                 <button 
                   type="button" 
                   className="status-pill memory-pill"
@@ -548,14 +841,18 @@ export default function Calculator({
             className="calc-main-digit"
             style={{ fontSize: getDisplayFontSize() }}
           >
-            {display}
+            {mode === 'programmer' ? (
+              progBase === 'BIN' 
+                ? formatNibbleBin(progVal, Math.min(progWordSize, 32))
+                : formatProgDisplay(progVal, progBase)
+            ) : display}
           </div>
 
           <div className="calc-screen-actions">
             <button
               type="button"
               className="screen-action-btn"
-              onClick={handleBackspace}
+              onClick={mode === 'programmer' ? handleProgBackspace : handleBackspace}
               title="Backspace / Delete last character"
               aria-label="Delete character"
             >
@@ -575,353 +872,672 @@ export default function Calculator({
           </div>
         </div>
 
-        {/* Memory Toolbar Bar */}
-        <div className="calc-memory-bar">
-          <button 
-            type="button" 
-            className={`mem-btn ${pressedKey === 'MC' ? 'active-press' : ''}`}
-            onClick={handleMemoryClear}
-            disabled={!isMemorySet}
-            title="Memory Clear"
-          >
-            MC
-          </button>
-          <button 
-            type="button" 
-            className={`mem-btn ${pressedKey === 'MR' ? 'active-press' : ''}`}
-            onClick={handleMemoryRecall}
-            disabled={!isMemorySet}
-            title="Memory Recall"
-          >
-            MR
-          </button>
-          <button 
-            type="button" 
-            className={`mem-btn ${pressedKey === 'M+' ? 'active-press' : ''}`}
-            onClick={handleMemoryAdd}
-            title="Memory Add"
-          >
-            M+
-          </button>
-          <button 
-            type="button" 
-            className={`mem-btn ${pressedKey === 'M-' ? 'active-press' : ''}`}
-            onClick={handleMemorySubtract}
-            title="Memory Subtract"
-          >
-            M-
-          </button>
-          <button 
-            type="button" 
-            className={`mem-btn ${pressedKey === 'MS' ? 'active-press' : ''}`}
-            onClick={handleMemoryStore}
-            title="Memory Store"
-          >
-            MS
-          </button>
-        </div>
+        {/* PROGRAMMER MODE SUITE */}
+        {mode === 'programmer' ? (
+          <div className="programmer-suite animate-fade-in">
+            {/* Base Selector Panel */}
+            <div className="prog-bases-list">
+              <button
+                type="button"
+                className={`prog-base-row ${progBase === 'HEX' ? 'active' : ''}`}
+                onClick={() => handleSelectProgBase('HEX')}
+              >
+                <span className="base-tag">HEX</span>
+                <span className="base-val">{progVal.toString(16).toUpperCase()}</span>
+              </button>
+              <button
+                type="button"
+                className={`prog-base-row ${progBase === 'DEC' ? 'active' : ''}`}
+                onClick={() => handleSelectProgBase('DEC')}
+              >
+                <span className="base-tag">DEC</span>
+                <span className="base-val">{progVal.toString(10)}</span>
+              </button>
+              <button
+                type="button"
+                className={`prog-base-row ${progBase === 'OCT' ? 'active' : ''}`}
+                onClick={() => handleSelectProgBase('OCT')}
+              >
+                <span className="base-tag">OCT</span>
+                <span className="base-val">{progVal.toString(8)}</span>
+              </button>
+              <button
+                type="button"
+                className={`prog-base-row ${progBase === 'BIN' ? 'active' : ''}`}
+                onClick={() => handleSelectProgBase('BIN')}
+              >
+                <span className="base-tag">BIN</span>
+                <span className="base-val">{formatNibbleBin(progVal, Math.min(progWordSize, 32))}</span>
+              </button>
+            </div>
 
-        {/* Extended Scientific Grid (if active) */}
-        {mode === 'scientific' && (
-          <div className="calc-sci-grid animate-fade-in">
-            {/* Row 1 */}
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'sin' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('sin')}
-              title={`Sine (${angleUnit})`}
-            >
-              sin
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'cos' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('cos')}
-              title={`Cosine (${angleUnit})`}
-            >
-              cos
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'tan' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('tan')}
-              title={`Tangent (${angleUnit})`}
-            >
-              tan
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'ln' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('ln')}
-              title="Natural Logarithm (ln)"
-            >
-              ln
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'log' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('log')}
-              title="Base-10 Logarithm (log)"
-            >
-              log
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'pi' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('pi')}
-              title="Pi (3.14159...)"
-            >
-              π
-            </button>
+            {/* Word Size Toolbar */}
+            <div className="prog-word-toolbar">
+              <span className="word-label"><Binary size={14} /> Word Width:</span>
+              <div className="word-pills">
+                {[
+                  { size: 64, label: 'QWORD (64)' },
+                  { size: 32, label: 'DWORD (32)' },
+                  { size: 16, label: 'WORD (16)' },
+                  { size: 8, label: 'BYTE (8)' }
+                ].map((item) => (
+                  <button
+                    key={item.size}
+                    type="button"
+                    className={`word-pill-btn ${progWordSize === item.size ? 'active' : ''}`}
+                    onClick={() => handleSelectWordSize(item.size)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {/* Row 2 */}
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'sqrt' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('sqrt')}
-              title="Square Root"
-            >
-              √x
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'square' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('square')}
-              title="Square (x²)"
-            >
-              x²
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === '^' ? 'active-press' : ''}`}
-              onClick={() => handleOperator('^')}
-              title="Power (xʸ)"
-            >
-              xʸ
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'cube' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('cube')}
-              title="Cube (x³)"
-            >
-              x³
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'factorial' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('factorial')}
-              title="Factorial (n!)"
-            >
-              n!
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'e' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('e')}
-              title="Euler's Constant e (2.71828...)"
-            >
-              e
-            </button>
+            {/* Interactive Bitboard */}
+            <div className="prog-bitboard">
+              <div className="bitboard-header">
+                <span>Interactive Bitboard (Click bit to toggle 0 ↔ 1)</span>
+                <span className="bitboard-range">{Math.min(progWordSize, 32) - 1} .. 0</span>
+              </div>
+              <div className="bitboard-grid">
+                {Array.from({ length: Math.min(progWordSize, 32) }, (_, i) => {
+                  const bitIndex = Math.min(progWordSize, 32) - 1 - i;
+                  const isSet = (progVal & (1n << BigInt(bitIndex))) !== 0n;
+                  return (
+                    <button
+                      key={bitIndex}
+                      type="button"
+                      className={`bit-cell ${isSet ? 'bit-active' : ''}`}
+                      onClick={() => handleToggleBit(bitIndex)}
+                      title={`Bit ${bitIndex} (Weight: 2^${bitIndex})\nClick to toggle`}
+                    >
+                      <span className="bit-val">{isSet ? '1' : '0'}</span>
+                      {bitIndex % 4 === 0 && <span className="bit-idx">{bitIndex}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            {/* Row 3 */}
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'reciprocal' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('reciprocal')}
-              title="Reciprocal (1/x)"
-            >
-              1/x
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'abs' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('abs')}
-              title="Absolute Value (|x|)"
-            >
-              |x|
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'pow10' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('pow10')}
-              title="Power of 10 (10ˣ)"
-            >
-              10ˣ
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'exp' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('exp')}
-              title="Exponential (eˣ)"
-            >
-              eˣ
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'cbrt' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('cbrt')}
-              title="Cube Root (∛x)"
-            >
-              ∛x
-            </button>
-            <button 
-              type="button" 
-              className={`key-btn key-sci ${pressedKey === 'rand' ? 'active-press' : ''}`}
-              onClick={() => handleSpecial('rand')}
-              title="Random Number (0-1)"
-            >
-              rnd
-            </button>
+            {/* Bitwise Operations Toolbar */}
+            <div className="prog-bitwise-grid">
+              <button 
+                type="button" 
+                className={`key-btn key-prog ${progOp === 'AND' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('AND')}
+                title="Bitwise AND (&)"
+              >
+                AND
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-prog ${progOp === 'OR' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('OR')}
+                title="Bitwise OR (|)"
+              >
+                OR
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-prog ${progOp === 'XOR' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('XOR')}
+                title="Bitwise XOR (^)"
+              >
+                XOR
+              </button>
+              <button 
+                type="button" 
+                className="key-btn key-prog"
+                onClick={() => handleProgOperator('NOT')}
+                title="Bitwise Inversion NOT (~)"
+              >
+                NOT
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-prog ${progOp === 'Lsh' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('Lsh')}
+                title="Bitwise Shift Left (<<)"
+              >
+                Lsh
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-prog ${progOp === 'Rsh' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('Rsh')}
+                title="Bitwise Shift Right (>>)"
+              >
+                Rsh
+              </button>
+            </div>
+
+            {/* Hex Characters (A-F) */}
+            <div className="prog-hex-grid">
+              {['A', 'B', 'C', 'D', 'E', 'F'].map((hexChar) => (
+                <button
+                  key={hexChar}
+                  type="button"
+                  className={`key-btn key-hex ${pressedKey === hexChar ? 'active-press' : ''}`}
+                  onClick={() => handleProgDigit(hexChar)}
+                  disabled={progBase !== 'HEX'}
+                  title={`Hex digit ${hexChar} (Available in HEX base)`}
+                >
+                  {hexChar}
+                </button>
+              ))}
+            </div>
+
+            {/* Programmer Standard Keypad Grid */}
+            <div className="calc-keypad-grid prog-main-grid">
+              {/* Row 1 */}
+              <button 
+                type="button" 
+                className="key-btn key-action"
+                onClick={handleProgClear}
+                title="Clear All (AC)"
+              >
+                AC
+              </button>
+              <button 
+                type="button" 
+                className="key-btn key-action"
+                onClick={() => setProgVal(0n)}
+                title="Clear current entry (C)"
+              >
+                C
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-prog ${progOp === 'MOD' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('MOD')}
+                title="Modulo remainder"
+              >
+                MOD
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${progOp === '÷' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('÷')}
+              >
+                ÷
+              </button>
+
+              {/* Row 2 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '7' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('7')}
+                disabled={isProgDigitDisabled(7)}
+              >
+                7
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '8' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('8')}
+                disabled={isProgDigitDisabled(8)}
+              >
+                8
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '9' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('9')}
+                disabled={isProgDigitDisabled(9)}
+              >
+                9
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${progOp === '×' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('×')}
+              >
+                ×
+              </button>
+
+              {/* Row 3 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '4' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('4')}
+                disabled={isProgDigitDisabled(4)}
+              >
+                4
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '5' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('5')}
+                disabled={isProgDigitDisabled(5)}
+              >
+                5
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '6' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('6')}
+                disabled={isProgDigitDisabled(6)}
+              >
+                6
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${progOp === '-' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('-')}
+              >
+                −
+              </button>
+
+              {/* Row 4 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '1' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('1')}
+                disabled={isProgDigitDisabled(1)}
+              >
+                1
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '2' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('2')}
+                disabled={isProgDigitDisabled(2)}
+              >
+                2
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '3' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('3')}
+                disabled={isProgDigitDisabled(3)}
+              >
+                3
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${progOp === '+' ? 'active-operator' : ''}`}
+                onClick={() => handleProgOperator('+')}
+              >
+                +
+              </button>
+
+              {/* Row 5 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num key-zero ${pressedKey === '0' ? 'active-press' : ''}`}
+                onClick={() => handleProgDigit('0')}
+              >
+                0
+              </button>
+              <button 
+                type="button" 
+                className="key-btn key-num"
+                disabled
+                title="Decimals not applicable in integer programmer mode"
+              >
+                .
+              </button>
+              <button 
+                type="button" 
+                className="key-btn key-equals"
+                onClick={handleProgEquals}
+              >
+                =
+              </button>
+            </div>
           </div>
+        ) : (
+          /* STANDARD & SCIENTIFIC SUITE */
+          <>
+            {/* Memory Toolbar Bar */}
+            <div className="calc-memory-bar">
+              <button 
+                type="button" 
+                className={`mem-btn ${pressedKey === 'MC' ? 'active-press' : ''}`}
+                onClick={handleMemoryClear}
+                disabled={!isMemorySet}
+                title="Memory Clear"
+              >
+                MC
+              </button>
+              <button 
+                type="button" 
+                className={`mem-btn ${pressedKey === 'MR' ? 'active-press' : ''}`}
+                onClick={handleMemoryRecall}
+                disabled={!isMemorySet}
+                title="Memory Recall"
+              >
+                MR
+              </button>
+              <button 
+                type="button" 
+                className={`mem-btn ${pressedKey === 'M+' ? 'active-press' : ''}`}
+                onClick={handleMemoryAdd}
+                title="Memory Add"
+              >
+                M+
+              </button>
+              <button 
+                type="button" 
+                className={`mem-btn ${pressedKey === 'M-' ? 'active-press' : ''}`}
+                onClick={handleMemorySubtract}
+                title="Memory Subtract"
+              >
+                M-
+              </button>
+              <button 
+                type="button" 
+                className={`mem-btn ${pressedKey === 'MS' ? 'active-press' : ''}`}
+                onClick={handleMemoryStore}
+                title="Memory Store"
+              >
+                MS
+              </button>
+            </div>
+
+            {/* Extended Scientific Grid (if active) */}
+            {mode === 'scientific' && (
+              <div className="calc-sci-grid animate-fade-in">
+                {/* Row 1 */}
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'sin' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('sin')}
+                  title={`Sine (${angleUnit})`}
+                >
+                  sin
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'cos' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('cos')}
+                  title={`Cosine (${angleUnit})`}
+                >
+                  cos
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'tan' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('tan')}
+                  title={`Tangent (${angleUnit})`}
+                >
+                  tan
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'ln' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('ln')}
+                  title="Natural Logarithm (ln)"
+                >
+                  ln
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'log' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('log')}
+                  title="Base-10 Logarithm (log)"
+                >
+                  log
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'pi' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('pi')}
+                  title="Pi (3.14159...)"
+                >
+                  π
+                </button>
+
+                {/* Row 2 */}
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'sqrt' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('sqrt')}
+                  title="Square Root"
+                >
+                  √x
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'square' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('square')}
+                  title="Square (x²)"
+                >
+                  x²
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === '^' ? 'active-press' : ''}`}
+                  onClick={() => handleOperator('^')}
+                  title="Power (xʸ)"
+                >
+                  xʸ
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'cube' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('cube')}
+                  title="Cube (x³)"
+                >
+                  x³
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'factorial' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('factorial')}
+                  title="Factorial (n!)"
+                >
+                  n!
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'e' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('e')}
+                  title="Euler's Constant e (2.71828...)"
+                >
+                  e
+                </button>
+
+                {/* Row 3 */}
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'reciprocal' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('reciprocal')}
+                  title="Reciprocal (1/x)"
+                >
+                  1/x
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'abs' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('abs')}
+                  title="Absolute Value (|x|)"
+                >
+                  |x|
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'pow10' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('pow10')}
+                  title="Power of 10 (10ˣ)"
+                >
+                  10ˣ
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'exp' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('exp')}
+                  title="Exponential (eˣ)"
+                >
+                  eˣ
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'cbrt' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('cbrt')}
+                  title="Cube Root (∛x)"
+                >
+                  ∛x
+                </button>
+                <button 
+                  type="button" 
+                  className={`key-btn key-sci ${pressedKey === 'rand' ? 'active-press' : ''}`}
+                  onClick={() => handleSpecial('rand')}
+                  title="Random Number (0-1)"
+                >
+                  rnd
+                </button>
+              </div>
+            )}
+
+            {/* Standard Keypad Grid */}
+            <div className="calc-keypad-grid">
+              {/* Row 1 */}
+              <button 
+                type="button" 
+                className={`key-btn key-action ${pressedKey === (display !== '0' && !waitingForOperand ? 'C' : 'AC') ? 'active-press' : ''}`}
+                onClick={display !== '0' && !waitingForOperand ? clearEntry : clearAll}
+                title={display !== '0' && !waitingForOperand ? 'Clear current entry (C)' : 'All Clear (AC)'}
+              >
+                {display !== '0' && !waitingForOperand ? 'C' : 'AC'}
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-action ${pressedKey === '+/-' ? 'active-press' : ''}`}
+                onClick={toggleSign}
+              >
+                +/-
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-action ${pressedKey === '%' ? 'active-press' : ''}`}
+                onClick={handlePercentage}
+              >
+                %
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${operator === '÷' || pressedKey === '÷' ? 'active-operator' : ''}`}
+                onClick={() => handleOperator('÷')}
+              >
+                ÷
+              </button>
+
+              {/* Row 2 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 7 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(7)}
+              >
+                7
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 8 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(8)}
+              >
+                8
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 9 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(9)}
+              >
+                9
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${operator === '×' || pressedKey === '×' ? 'active-operator' : ''}`}
+                onClick={() => handleOperator('×')}
+              >
+                ×
+              </button>
+
+              {/* Row 3 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 4 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(4)}
+              >
+                4
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 5 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(5)}
+              >
+                5
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 6 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(6)}
+              >
+                6
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${operator === '-' || pressedKey === '-' ? 'active-operator' : ''}`}
+                onClick={() => handleOperator('-')}
+              >
+                −
+              </button>
+
+              {/* Row 4 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 1 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(1)}
+              >
+                1
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 2 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(2)}
+              >
+                2
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === 3 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(3)}
+              >
+                3
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-operator ${operator === '+' || pressedKey === '+' ? 'active-operator' : ''}`}
+                onClick={() => handleOperator('+')}
+              >
+                +
+              </button>
+
+              {/* Row 5 */}
+              <button 
+                type="button" 
+                className={`key-btn key-num key-zero ${pressedKey === 0 ? 'active-press' : ''}`}
+                onClick={() => inputDigit(0)}
+              >
+                0
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-num ${pressedKey === '.' ? 'active-press' : ''}`}
+                onClick={inputDecimal}
+              >
+                .
+              </button>
+              <button 
+                type="button" 
+                className={`key-btn key-equals ${pressedKey === '=' ? 'active-press' : ''}`}
+                onClick={handleEquals}
+              >
+                =
+              </button>
+            </div>
+          </>
         )}
-
-        {/* Standard Keypad Grid */}
-        <div className="calc-keypad-grid">
-          {/* Row 1 */}
-          <button 
-            type="button" 
-            className={`key-btn key-action ${pressedKey === (display !== '0' && !waitingForOperand ? 'C' : 'AC') ? 'active-press' : ''}`}
-            onClick={display !== '0' && !waitingForOperand ? clearEntry : clearAll}
-            title={display !== '0' && !waitingForOperand ? 'Clear current entry (C)' : 'All Clear (AC)'}
-          >
-            {display !== '0' && !waitingForOperand ? 'C' : 'AC'}
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-action ${pressedKey === '+/-' ? 'active-press' : ''}`}
-            onClick={toggleSign}
-          >
-            +/-
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-action ${pressedKey === '%' ? 'active-press' : ''}`}
-            onClick={handlePercentage}
-          >
-            %
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-operator ${operator === '÷' || pressedKey === '÷' ? 'active-operator' : ''}`}
-            onClick={() => handleOperator('÷')}
-          >
-            ÷
-          </button>
-
-          {/* Row 2 */}
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 7 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(7)}
-          >
-            7
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 8 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(8)}
-          >
-            8
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 9 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(9)}
-          >
-            9
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-operator ${operator === '×' || pressedKey === '×' ? 'active-operator' : ''}`}
-            onClick={() => handleOperator('×')}
-          >
-            ×
-          </button>
-
-          {/* Row 3 */}
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 4 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(4)}
-          >
-            4
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 5 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(5)}
-          >
-            5
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 6 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(6)}
-          >
-            6
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-operator ${operator === '-' || pressedKey === '-' ? 'active-operator' : ''}`}
-            onClick={() => handleOperator('-')}
-          >
-            −
-          </button>
-
-          {/* Row 4 */}
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 1 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(1)}
-          >
-            1
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 2 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(2)}
-          >
-            2
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === 3 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(3)}
-          >
-            3
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-operator ${operator === '+' || pressedKey === '+' ? 'active-operator' : ''}`}
-            onClick={() => handleOperator('+')}
-          >
-            +
-          </button>
-
-          {/* Row 5 */}
-          <button 
-            type="button" 
-            className={`key-btn key-num key-zero ${pressedKey === 0 ? 'active-press' : ''}`}
-            onClick={() => inputDigit(0)}
-          >
-            0
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-num ${pressedKey === '.' ? 'active-press' : ''}`}
-            onClick={inputDecimal}
-          >
-            .
-          </button>
-          <button 
-            type="button" 
-            className={`key-btn key-equals ${pressedKey === '=' ? 'active-press' : ''}`}
-            onClick={handleEquals}
-          >
-            =
-          </button>
-        </div>
       </div>
     </div>
   );
