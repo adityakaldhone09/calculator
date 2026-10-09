@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Navbar from './components/Navbar';
 import Calculator from './components/Calculator';
+import UnitConverter from './components/UnitConverter';
 import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
@@ -14,6 +15,8 @@ export default function App() {
       return null;
     }
   });
+
+  const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'converter'
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('calcpulse_theme') || 'aurora';
@@ -162,26 +165,43 @@ export default function App() {
             historyCount={history.length}
             onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
             isHistoryOpen={isHistoryOpen}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
           />
 
           <main className="main-content-area">
-            {/* Calculator Card */}
-            <Calculator 
-              onAddHistory={handleAddHistory}
-              soundEnabled={soundEnabled}
-              onNotify={showToast}
-              externalValue={selectedCalcValue}
-            />
+            {activeTab === 'calculator' ? (
+              <>
+                {/* Calculator Workspace */}
+                <Calculator 
+                  onAddHistory={handleAddHistory}
+                  soundEnabled={soundEnabled}
+                  onNotify={showToast}
+                  externalValue={selectedCalcValue}
+                />
 
-            {/* Quick Keyboard shortcuts hint pill */}
-            <div className="shortcuts-pill-banner">
-              <span className="pill-title">⌨ Quick Shortcuts:</span>
-              <span className="pill-item"><kbd>0-9</kbd> Digits</span>
-              <span className="pill-item"><kbd>+</kbd><kbd>-</kbd><kbd>*</kbd><kbd>/</kbd> Ops</span>
-              <span className="pill-item"><kbd>Enter</kbd> Solve</span>
-              <span className="pill-item"><kbd>Esc</kbd> Clear</span>
-              <span className="pill-item"><kbd>⌫</kbd> Del</span>
-            </div>
+                {/* Quick Keyboard shortcuts hint pill */}
+                <div className="shortcuts-pill-banner">
+                  <span className="pill-title">⌨ Quick Shortcuts:</span>
+                  <span className="pill-item"><kbd>0-9</kbd> Digits</span>
+                  <span className="pill-item"><kbd>+</kbd><kbd>-</kbd><kbd>*</kbd><kbd>/</kbd> Ops</span>
+                  <span className="pill-item"><kbd>Enter</kbd> Solve</span>
+                  <span className="pill-item"><kbd>Esc</kbd> Clear</span>
+                  <span className="pill-item"><kbd>⌫</kbd> Del</span>
+                </div>
+              </>
+            ) : (
+              /* Unit & Currency Converter Workspace */
+              <UnitConverter 
+                soundEnabled={soundEnabled}
+                onNotify={showToast}
+                onSendToCalculator={(val) => {
+                  setSelectedCalcValue(val);
+                  setActiveTab('calculator');
+                  showToast(`Sent ${val} to Calculator!`, 'success');
+                }}
+              />
+            )}
           </main>
 
           {/* History Drawer */}

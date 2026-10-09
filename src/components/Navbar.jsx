@@ -8,7 +8,8 @@ import {
   Moon,
   Volume2, 
   VolumeX, 
-  Sparkles
+  Sparkles,
+  ArrowRightLeft
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -21,7 +22,9 @@ export default function Navbar({
   onToggleSound, 
   historyCount, 
   onToggleHistory, 
-  isHistoryOpen 
+  isHistoryOpen,
+  activeTab = 'calculator',
+  onSelectTab
 }) {
   const getThemeInfo = () => {
     switch (theme) {
@@ -51,6 +54,30 @@ export default function Navbar({
             <span className="brand-badge">Workspace</span>
           </div>
         </div>
+
+        {/* Center Workspace Tabs */}
+        {onSelectTab && (
+          <div className="navbar-workspace-tabs">
+            <button
+              type="button"
+              className={`workspace-tab-btn ${activeTab === 'calculator' ? 'active' : ''}`}
+              onClick={() => onSelectTab('calculator')}
+              title="Calculator Workspace"
+            >
+              <Calculator size={15} />
+              <span>Calculator</span>
+            </button>
+            <button
+              type="button"
+              className={`workspace-tab-btn ${activeTab === 'converter' ? 'active' : ''}`}
+              onClick={() => onSelectTab('converter')}
+              title="Unit & Currency Converter"
+            >
+              <ArrowRightLeft size={15} />
+              <span>Converter</span>
+            </button>
+          </div>
+        )}
 
         {/* Center / Action Controls */}
         <div className="navbar-controls">

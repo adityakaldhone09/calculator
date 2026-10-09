@@ -75,6 +75,41 @@
   border: 1px solid rgba(99, 102, 241, 0.25);
 }
 
+/* Workspace Mode Tabs */
+.navbar-workspace-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  gap: 3px;
+}
+
+.workspace-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.workspace-tab-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-button);
+}
+
+.workspace-tab-btn.active {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 /* Controls */
 .navbar-controls {
   display: flex;

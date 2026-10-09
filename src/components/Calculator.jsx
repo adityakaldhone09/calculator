@@ -781,10 +781,11 @@ export default function Calculator({
           {/* Row 1 */}
           <button 
             type="button" 
-            className={`key-btn key-action ${pressedKey === 'AC' ? 'active-press' : ''}`}
-            onClick={clearAll}
+            className={`key-btn key-action ${pressedKey === (display !== '0' && !waitingForOperand ? 'C' : 'AC') ? 'active-press' : ''}`}
+            onClick={display !== '0' && !waitingForOperand ? clearEntry : clearAll}
+            title={display !== '0' && !waitingForOperand ? 'Clear current entry (C)' : 'All Clear (AC)'}
           >
-            AC
+            {display !== '0' && !waitingForOperand ? 'C' : 'AC'}
           </button>
           <button 
             type="button" 
