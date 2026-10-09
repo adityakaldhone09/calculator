@@ -132,6 +132,12 @@ export default function App() {
     showToast('Calculation tape cleared', 'info');
   };
 
+  const handleDeleteHistoryItem = (id) => {
+    setHistory((prev) => prev.filter((item) => item.id !== id));
+    fetch(`/api/history/${id}`, { method: 'DELETE' }).catch(() => {});
+    showToast('Calculation entry removed', 'info');
+  };
+
   const handleSelectHistoryItem = (item) => {
     setSelectedCalcValue(item.result);
     setIsHistoryOpen(false);
@@ -210,8 +216,10 @@ export default function App() {
             onClose={() => setIsHistoryOpen(false)}
             history={history}
             onClearHistory={handleClearHistory}
+            onDeleteItem={handleDeleteHistoryItem}
             onSelectCalculation={handleSelectHistoryItem}
             onCopyResult={(val) => showToast(`Copied ${val} to clipboard!`, 'success')}
+            onNotify={showToast}
           />
         </div>
       )}

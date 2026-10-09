@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   History, 
   Trash2, 
@@ -6,7 +6,9 @@ import {
   Copy, 
   Check, 
   ArrowUpRight,
-  Calculator
+  Calculator,
+  Search,
+  FileSpreadsheet
 } from 'lucide-react';
 import './HistoryDrawer.css';
 
@@ -15,10 +17,14 @@ export default function HistoryDrawer({
   onClose, 
   history, 
   onClearHistory, 
+  onDeleteItem,
   onSelectCalculation,
-  onCopyResult 
+  onCopyResult,
+  onNotify
 }) {
-  const [copiedId, setCopiedId] = React.useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allCopied, setAllCopied] = useState(false);
 
   const handleCopy = (e, item) => {
     e.stopPropagation();
@@ -28,7 +34,61 @@ export default function HistoryDrawer({
     setTimeout(() => setCopiedId(null), 1800);
   };
 
+  const handleDeleteSingle = (e, id) => {
+    e.stopPropagation();
+    onDeleteItem?.(id);
+  };
+
+  const handleCopyAll = () => {
+    if (history.length === 0) return;
+    const tapeText = [
+      '=== CalcPulse Calculation Tape ===',
+      `Exported: ${new Date().toLocaleString()}`,
+      '----------------------------------',
+      ...history.map(
+        (h) => `[${h.timestamp}] ${h.expression} = ${h.result}`
+      ),
+      '=================================='
+    ].join('\n');
+
+    navigator.clipboard.writeText(tapeText);
+    setAllCopied(true);
+    onNotify?.('Copied full calculation tape to clipboard!', 'success');
+    setTimeout(() => setAllCopied(false), 2000);
+  };
+
+  const handleExportCSV = () => {
+    if (history.length === 0) return;
+    const header = 'Timestamp,Expression,Result\n';
+    const rows = history
+      .map(
+        (h) =>
+          `"${h.timestamp}","${h.expression?.replace(/"/g, '""')}","${h.result?.replace(/"/g, '""')}"`
+      )
+      .join('\n');
+    const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(header + rows);
+    const link = document.createElement('a');
+    link.setAttribute('href', csvContent);
+    link.setAttribute(
+      'download',
+      `calcpulse_tape_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    onNotify?.('Exported calculation tape as CSV!', 'success');
+  };
+
   if (!isOpen) return null;
+
+  const filteredHistory = history.filter((item) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (item.expression && item.expression.toLowerCase().includes(term)) ||
+      (item.result && item.result.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="history-backdrop" onClick={onClose}>
@@ -51,9 +111,9 @@ export default function HistoryDrawer({
                 type="button"
                 className="history-clear-btn"
                 onClick={onClearHistory}
-                title="Clear all history"
+                title="Clear entire calculation tape"
               >
-                <Trash2 size={16} />
+                <Trash2 size={15} />
                 <span>Clear</span>
               </button>
             )}
@@ -68,6 +128,54 @@ export default function HistoryDrawer({
           </div>
         </div>
 
+        {/* Search & Export Toolbar */}
+        {history.length > 0 && (
+          <div className="history-toolbar">
+            <div className="history-search-wrapper">
+              <Search size={15} className="search-icon" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search tape..."
+                className="history-search-input"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setSearchTerm('')}
+                  aria-label="Clear search"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+
+            <div className="history-export-actions">
+              <button
+                type="button"
+                className="export-action-btn"
+                onClick={handleCopyAll}
+                title="Copy all tape calculations"
+              >
+                {allCopied ? <Check size={14} className="copied-check" /> : <Copy size={14} />}
+                <span>{allCopied ? 'Copied' : 'Copy Tape'}</span>
+              </button>
+
+              <button
+                type="button"
+                className="export-action-btn"
+                onClick={handleExportCSV}
+                title="Export tape as CSV spreadsheet"
+              >
+                <FileSpreadsheet size={14} />
+                <span>CSV</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* List of calculations */}
         <div className="history-list">
           {history.length === 0 ? (
@@ -80,8 +188,15 @@ export default function HistoryDrawer({
                 Perform calculations to record them to your persistent session tape.
               </p>
             </div>
+          ) : filteredHistory.length === 0 ? (
+            <div className="history-empty">
+              <p className="empty-title">No matching calculations</p>
+              <p className="empty-subtitle">
+                No entries match your search query "{searchTerm}".
+              </p>
+            </div>
           ) : (
-            history.map((item) => (
+            filteredHistory.map((item) => (
               <div
                 key={item.id}
                 className="history-item"
@@ -90,14 +205,27 @@ export default function HistoryDrawer({
               >
                 <div className="history-item-top">
                   <span className="history-time">{item.timestamp}</span>
-                  <button
-                    type="button"
-                    className="history-item-copy-btn"
-                    onClick={(e) => handleCopy(e, item)}
-                    title="Copy result to clipboard"
-                  >
-                    {copiedId === item.id ? <Check size={14} className="copied-check" /> : <Copy size={14} />}
-                  </button>
+                  <div className="history-item-actions">
+                    <button
+                      type="button"
+                      className="history-item-copy-btn"
+                      onClick={(e) => handleCopy(e, item)}
+                      title="Copy result to clipboard"
+                    >
+                      {copiedId === item.id ? <Check size={14} className="copied-check" /> : <Copy size={14} />}
+                    </button>
+                    {onDeleteItem && (
+                      <button
+                        type="button"
+                        className="history-item-delete-btn"
+                        onClick={(e) => handleDeleteSingle(e, item.id)}
+                        title="Delete calculation from tape"
+                        aria-label="Delete calculation"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="history-expression">{item.expression}</div>
                 <div className="history-result">
@@ -113,7 +241,7 @@ export default function HistoryDrawer({
         {/* Footer tip */}
         {history.length > 0 && (
           <div className="history-footer">
-            <span>💡 Tip: Click any row to load value back into keypad</span>
+            <span>💡 Click any row to load value back into keypad</span>
           </div>
         )}
       </aside>

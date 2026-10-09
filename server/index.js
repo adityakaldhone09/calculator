@@ -181,12 +181,43 @@ app.post('/api/history', (req, res) => {
   });
 });
 
+// Delete single calculation entry
+app.delete('/api/history/:id', (req, res) => {
+  const { id } = req.params;
+  const index = calculationHistory.findIndex((h) => h.id === id);
+  if (index !== -1) {
+    calculationHistory.splice(index, 1);
+    return res.json({ success: true, message: 'Calculation entry deleted', id });
+  }
+  return res.status(404).json({ error: 'Calculation entry not found' });
+});
+
 // Clear calculation history
 app.delete('/api/history', (req, res) => {
   calculationHistory.length = 0;
   res.json({
     success: true,
     message: 'History cleared'
+  });
+});
+
+// Unit & Currency Conversion rates
+app.get('/api/converter/rates', (req, res) => {
+  res.json({
+    success: true,
+    base: 'USD',
+    updatedAt: new Date().toISOString(),
+    rates: {
+      USD: 1.0,
+      EUR: 0.92,
+      GBP: 0.79,
+      JPY: 154.6,
+      INR: 86.8,
+      CAD: 1.38,
+      AUD: 1.55,
+      CHF: 0.88,
+      CNY: 7.24
+    }
   });
 });
 

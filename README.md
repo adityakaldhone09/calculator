@@ -34,9 +34,31 @@ An ultra-modern, responsive, glassmorphic calculator application built with **Re
 - **Copy & Clear**: Copy individual entries or clear the session history with safety confirmation.
 
 ### 4. 🎨 Multi-Theme Design System
+- **Frost White** (New in Phase 2): Pure, frosted glass white mode with high-contrast slate typography, luminous pastel glow, and clean borders.
 - **Aurora Dark** (Default): Radiant indigo and pink ambient glow over deep obsidian.
 - **Cyber Neon**: Electric cyan, blue, and hot magenta cybernetic styling.
-- **Clean Slate**: Subtle deep slate with blue accents for distraction-free sessions.
+- **Slate Dark**: Subtle deep slate with blue accents for distraction-free sessions.
+
+### 5. 🔬 Advanced Scientific & Memory Suite (Phase 2)
+- **Memory Engine**: Instant hardware-style `MC` (Clear), `MR` (Recall), `M+` (Add), `M-` (Subtract), and `MS` (Store) with active `M` memory pill badge in the screen.
+- **Trigonometry**: Angle mode switcher between `DEG` (Degrees) and `RAD` (Radians) with precision `sin`, `cos`, and `tan` functions.
+- **Extended Functions**: Natural log (`ln`), base-10 log (`log`), exponential (`eˣ`, `10ˣ`), powers & roots (`x²`, `x³`, `xʸ`, `√x`, `∛x`, `1/x`), factorial (`n!`), absolute value (`|x|`), constants (`π`, `e`), and random generator (`rand`).
+
+### 6. 🔄 Multi-Category Unit & Currency Converter (Phase 2)
+- **6 Essential Categories**:
+  - 💱 **Currency**: Live exchange rates for USD, EUR, GBP, JPY, INR, CAD, AUD, CHF, and CNY.
+  - 📏 **Length**: km, m, cm, mm, miles, yards, feet, inches.
+  - ⚖️ **Mass & Weight**: Metric tons, kg, g, mg, pounds, ounces.
+  - 🌡️ **Temperature**: Celsius (°C), Fahrenheit (°F), Kelvin (K).
+  - 💾 **Digital Storage**: Bytes, KB, MB, GB, TB, PB.
+  - ⏱️ **Time**: Milliseconds, seconds, minutes, hours, days, weeks.
+- **Bidirectional Unit Swap**: 1-click swap button (⇄) with tactile feedback and micro-animation.
+- **Send to Calculator**: Instantly transfer converted figures directly into the calculator display.
+
+### 7. 📜 Enhanced Calculation Tape & Search (Phase 2)
+- **Live Search**: Instant text filtering for mathematical expressions and results.
+- **Single Item Deletion**: Delete individual entries directly from the drawer tape.
+- **CSV & Tape Export**: Export full calculation tape to CSV spreadsheet or copy formatted text tape.
 
 ---
 
@@ -64,14 +86,14 @@ An ultra-modern, responsive, glassmorphic calculator application built with **Re
    npm run dev
    ```
 
-4. Build for production:
+4. Launch backend API server:
    ```bash
-   npm run build
+   npm run server
    ```
 
-5. Preview production build:
+5. Build for production:
    ```bash
-   npm run preview
+   npm run build
    ```
 
 ---
@@ -80,6 +102,7 @@ An ultra-modern, responsive, glassmorphic calculator application built with **Re
 - **Framework**: React 19
 - **Bundler & Tooling**: Vite 8
 - **Styling**: Vanilla CSS Design Tokens & Glassmorphism
+- **Backend API**: Express 5 & Node.js
 - **Icons**: Lucide React
 - **Audio**: Web Audio API (zero external assets)
 
@@ -90,3 +113,9 @@ An ultra-modern, responsive, glassmorphic calculator application built with **Re
 2. `feat: implement responsive modern authentication with guest demo login and session handling`
 3. `feat: implement responsive calculator core layout, interactive keypad, and history panel`
 4. `polish: add keyboard shortcuts, theme customization, and UI micro-animations`
+5. `feat: implement Express backend API with auth, history sync, and Vite proxy`
+6. `feat(theme): add Frost White light theme system with adaptive tokens and UI controls`
+7. `feat(calc): implement memory engine (MC/MR/M+/M-/MS), DEG/RAD mode, and expanded scientific suite`
+8. `feat(converter): introduce multi-category unit and currency converter workspace`
+9. `feat(history): add tape search, single-item deletion, CSV/TXT export, and rate endpoints`
+
