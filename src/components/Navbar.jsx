@@ -11,7 +11,8 @@ import {
   Sparkles,
   ArrowRightLeft,
   DollarSign,
-  LineChart
+  LineChart,
+  Grid3X3
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -95,6 +96,15 @@ export default function Navbar({
             >
               <LineChart size={15} />
               <span>Grapher</span>
+            </button>
+            <button
+              type="button"
+              className={`workspace-tab-btn ${activeTab === 'matrix' ? 'active' : ''}`}
+              onClick={() => onSelectTab('matrix')}
+              title="Matrix & Algebra Studio"
+            >
+              <Grid3X3 size={15} />
+              <span>Matrix</span>
             </button>
           </div>
         )}

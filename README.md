@@ -76,6 +76,26 @@ An ultra-modern, responsive, glassmorphic workstation application built with **R
 - **Quick Numerical Statistics**: Live computation of Count ($N$), Sum ($\Sigma$), Mean / Average ($\mu$), Min, and Max across the calculation session with 1-click transfer to keypad.
 - **CSV & Tape Export**: Export full calculation tape to CSV spreadsheet or copy formatted text tape.
 
+### 10. 📐 Matrix Studio & Linear Algebra Engine (New in Phase 4)
+- **Dynamic Matrix Grids**: Configurable dimensions for Matrix A and Matrix B (from $1\times 1$ up to $4\times 4$) with live glowing bracket layout.
+- **Matrix Operations**: Matrix addition ($A + B$), subtraction ($A - B$), matrix multiplication ($A \times B$), and scalar multiplication ($k \cdot A$).
+- **Unary Transformations**:
+  - Determinant ($\det(A)$) for square matrices with singularity validation.
+  - Matrix Inverse ($A^{-1}$) via Gauss-Jordan elimination.
+  - Transpose ($A^T$) and Trace ($\operatorname{tr}(A)$).
+- **Matrix Utilities**: Swap $A \leftrightarrow B$, 1-click result loading back into Matrix A or B, identity presets, random generators, and "Send to Calculator".
+
+### 11. 🧮 Polynomial & Linear Systems Equation Solver (New in Phase 4)
+- **Quadratic Equations ($ax^2 + bx + c = 0$)**: Instant discriminant ($\Delta = b^2 - 4ac$), real distinct roots, repeated root, or complex conjugate roots ($u \pm vi$), along with parabola vertex $(h, k)$ and curve concavity.
+- **Cubic Equations ($ax^3 + bx^2 + cx + d = 0$)**: Solves all three roots (real and complex) using Cardano's analytical method.
+- **$2 \times 2$ & $3 \times 3$ Linear System Solvers**: Solves multi-variable systems in $(x, y)$ and $(x, y, z)$ using Cramer's determinant rule and Gaussian elimination with automatic singularity and inconsistency detection.
+- **Result Transfer**: 1-click button to pipe any calculated root or variable directly into the main calculator.
+
+### 12. 📊 Statistical Analysis & Linear Regression Lab (New in Phase 4)
+- **Descriptive Statistics**: Analyzes datasets with sample count ($n$), sum ($\Sigma x$), mean ($\mu$), median, mode, sample and population standard deviations ($s, \sigma$), variance ($s^2, \sigma^2$), range, quartiles ($Q_1, Q_3$), and IQR.
+- **Bivariate Linear Regression**: Evaluates $(x, y)$ coordinate pairs, determines best-fit equation ($y = mx + c$), Pearson correlation ($r$), and coefficient of determination ($R^2$).
+- **Interactive Predictor Tool**: Enter arbitrary $x$ coordinates to estimate predicted $\hat{y}$ values and send results into the calculator.
+
 ---
 
 ## 🚀 Getting Started
@@ -138,3 +158,4 @@ An ultra-modern, responsive, glassmorphic workstation application built with **R
 11. `feat(financial): add comprehensive Financial & Investment workspace with EMI, SIP, and bill splitting`
 12. `feat(grapher): introduce interactive 2D function grapher with Cartesian canvas and coordinate tracking`
 13. `feat(stats): add tape statistics, multi-workspace navigation, and Phase 3 documentation`
+14. `feat(matrix): introduce Matrix Studio, Equation Solver, and Regression Lab for Phase 4`

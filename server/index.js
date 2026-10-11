@@ -275,6 +275,80 @@ app.post('/api/financial/compound', (req, res) => {
   });
 });
 
+// Matrix: Determinant & Trace API (Phase 4)
+app.post('/api/matrix/analyze', (req, res) => {
+  const { matrix } = req.body;
+  if (!Array.isArray(matrix) || !Array.isArray(matrix[0])) {
+    return res.status(400).json({ error: 'Valid 2D matrix array is required' });
+  }
+  const n = matrix.length;
+  const isSquare = matrix.every((r) => r.length === n);
+  if (!isSquare) {
+    return res.status(400).json({ error: 'Matrix must be square' });
+  }
+
+  let tr = 0;
+  for (let i = 0; i < n; i++) tr += matrix[i][i];
+
+  let det = null;
+  if (n === 2) {
+    det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+  } else if (n === 3) {
+    det =
+      matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
+      matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
+      matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
+  }
+
+  res.json({
+    success: true,
+    order: `${n}x${n}`,
+    trace: tr,
+    determinant: det,
+    isSingular: det !== null ? Math.abs(det) < 1e-12 : undefined
+  });
+});
+
+// Equations: Quadratic Solver API (Phase 4)
+app.post('/api/equations/quadratic', (req, res) => {
+  const { a = 1, b = 0, c = 0 } = req.body;
+  const numA = parseFloat(a);
+  const numB = parseFloat(b);
+  const numC = parseFloat(c);
+
+  if (!numA || isNaN(numA)) {
+    return res.status(400).json({ error: 'Coefficient "a" cannot be 0' });
+  }
+
+  const disc = numB * numB - 4 * numA * numC;
+  const vertex = { x: -numB / (2 * numA), y: numC - (numB * numB) / (4 * numA) };
+
+  if (disc >= 0) {
+    const r1 = (-numB + Math.sqrt(disc)) / (2 * numA);
+    const r2 = (-numB - Math.sqrt(disc)) / (2 * numA);
+    return res.json({
+      success: true,
+      discriminant: disc,
+      type: disc === 0 ? 'repeated_real' : 'two_real',
+      roots: [Number(r1.toFixed(4)), Number(r2.toFixed(4))],
+      vertex
+    });
+  } else {
+    const real = -numB / (2 * numA);
+    const imag = Math.sqrt(-disc) / (2 * numA);
+    return res.json({
+      success: true,
+      discriminant: disc,
+      type: 'complex_conjugate',
+      roots: [
+        `${real.toFixed(4)} + ${imag.toFixed(4)}i`,
+        `${real.toFixed(4)} - ${imag.toFixed(4)}i`
+      ],
+      vertex
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 CalcPulse Backend Server listening on http://localhost:${PORT}`);
   console.log(`📡 Health endpoint: http://localhost:${PORT}/api/health`);

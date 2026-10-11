@@ -5,6 +5,7 @@ import Calculator from './components/Calculator';
 import UnitConverter from './components/UnitConverter';
 import FinancialCalculator from './components/FinancialCalculator';
 import FunctionGrapher from './components/FunctionGrapher';
+import MatrixAlgebra from './components/MatrixAlgebra';
 import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
@@ -229,6 +230,19 @@ export default function App() {
             {activeTab === 'grapher' && (
               /* 2D Function Grapher Workspace */
               <FunctionGrapher 
+                soundEnabled={soundEnabled}
+                onNotify={showToast}
+                onSendToCalculator={(val) => {
+                  setSelectedCalcValue(val);
+                  setActiveTab('calculator');
+                  showToast(`Transferred ${val} to Calculator!`, 'success');
+                }}
+              />
+            )}
+
+            {activeTab === 'matrix' && (
+              /* Matrix Studio & Linear Algebra Workspace */
+              <MatrixAlgebra 
                 soundEnabled={soundEnabled}
                 onNotify={showToast}
                 onSendToCalculator={(val) => {
