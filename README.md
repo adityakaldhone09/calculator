@@ -91,10 +91,40 @@ An ultra-modern, responsive, glassmorphic workstation application built with **R
 - **$2 \times 2$ & $3 \times 3$ Linear System Solvers**: Solves multi-variable systems in $(x, y)$ and $(x, y, z)$ using Cramer's determinant rule and Gaussian elimination with automatic singularity and inconsistency detection.
 - **Result Transfer**: 1-click button to pipe any calculated root or variable directly into the main calculator.
 
-### 12. 📊 Statistical Analysis & Linear Regression Lab (New in Phase 4)
+### 12. 📊 Statistical Analysis & Linear Regression Lab (Phase 4)
 - **Descriptive Statistics**: Analyzes datasets with sample count ($n$), sum ($\Sigma x$), mean ($\mu$), median, mode, sample and population standard deviations ($s, \sigma$), variance ($s^2, \sigma^2$), range, quartiles ($Q_1, Q_3$), and IQR.
 - **Bivariate Linear Regression**: Evaluates $(x, y)$ coordinate pairs, determines best-fit equation ($y = mx + c$), Pearson correlation ($r$), and coefficient of determination ($R^2$).
 - **Interactive Predictor Tool**: Enter arbitrary $x$ coordinates to estimate predicted $\hat{y}$ values and send results into the calculator.
+
+### 13. ♾️ Calculus & Numerical Quadrature Suite (New in Phase 5)
+- **Numerical Definite Integration ($\int_a^b f(x)\,dx$)**:
+  - **Simpson's 1/3 Rule**: Fourth-order parabolic quadrature with even subinterval subdivisions ($n = 4 \dots 1000$).
+  - **Trapezoidal & Midpoint Rules**: Linear interpolation with estimated error $|S_n - T_n|/3$ and Mean Value Theorem average $\bar{f} = \frac{1}{b-a}\int_a^b f(x)dx$.
+  - **Riemann Area Visualizer (SVG)**: Real-time dynamic SVG graph rendering the region under $f(x)$ bounded between $x = a$ and $x = b$ with ambient neon glow.
+  - **Built-in Presets**: Standard Normal Gaussian distribution ($\int_0^{1.5} e^{-x^2}dx$), Cubic polynomial ($\int_0^3 (x^3 - 3x + 2)dx$), Half Sine wave ($\int_0^\pi \sin(x)dx$), and Arctan ($\int_0^1 \frac{1}{1+x^2}dx = \frac{\pi}{4}$).
+- **Differential & Curvature Engine**:
+  - **Central Finite Difference 5-Point Stencil**: Computes high-precision first derivative $f'(x_0) = \frac{-f(x+2h) + 8f(x+h) - 8f(x-h) + f(x-2h)}{12h}$.
+  - **Second Derivative & Concavity**: Evaluates $f''(x_0)$, identifying concave up ($\cup$), concave down ($\cap$), or inflection points ($\sim$).
+  - **Tangent & Normal Lines**: Generates exact Cartesian equations ($y = mx + c$) for tangent lines and perpendicular normal lines.
+  - **Curvature & Osculating Radius**: Computes differential curvature $\kappa = \frac{|f''(x_0)|}{(1 + f'(x_0)^2)^{3/2}}$ and radius of curvature $R = 1/\kappa$.
+- **Numerical Root Finding Suite**:
+  - **Newton-Raphson Method ($x_{k+1} = x_k - \frac{f(x_k)}{f'(x_k)}$)**: Rapid quadratic convergence with configurable initial guess $x_0$, tolerance $\varepsilon$, and maximum iteration limit.
+  - **Bisection Bracket Method**: Interval halving algorithm with sign-change validation across $[a, b]$.
+  - **Step-by-Step Convergence Trace**: Interactive audit table recording estimate $x_k$, evaluation $f(x_k)$, derivative $f'(x_k)$, and step delta $|\Delta x_k|$.
+
+### 14. 🧭 Complex Numbers & Argand Vector Plane (New in Phase 5)
+- **Dual Coordinate Representation**: Seamless rectangular ($a + bi$) and polar ($r \angle \theta^\circ$) coordinates for $z_1$ and $z_2$.
+- **Complex Arithmetic Engine**: Complex addition ($z_1 + z_2$), subtraction ($z_1 - z_2$), multiplication ($z_1 \cdot z_2$), and division ($z_1 / z_2$) with singularity protection.
+- **Powers & De Moivre Roots**: Computes integer powers $z^n$ and all $n$ distinct complex roots $\sqrt[n]{z} = \sqrt[n]{r}\left(\cos\frac{\theta + 2k\pi}{n} + i\sin\frac{\theta + 2k\pi}{n}\right)$.
+- **Interactive Argand Vector Plane (SVG)**: Visual coordinate canvas displaying real ($Re$) and imaginary ($Im$) axes, concentric magnitude rings, and glowing directional vectors for $z_1$ (blue), $z_2$ (magenta), and Result $z_{res}$ (emerald green).
+
+### 15. 📐 Spatial Geometry & Classical/Relativistic Physics Lab (New in Phase 5)
+- **2D Planar Shapes**: Circle ($A = \pi r^2, C = 2\pi r$), Ellipse (Ramanujan perimeter approximation and eccentricity), Triangle (Heron's formula, inradius $r = A/s$, and circumradius $R$), Trapezoid, and Regular $n$-sided polygon.
+- **3D Spatial Solids**: Sphere, Right Circular Cylinder, Right Circular Cone, Torus (donut ring), Rectangular Cuboid, and Square Pyramid with live volume and surface area breakdowns.
+- **Ballistic Projectile Motion**: Computes Flight Time ($T$), Maximum Height ($H$), Horizontal Range ($R$), initial velocity components, and dynamic trajectory parabola curve. Presets for Earth ($9.81\text{ m/s}^2$), Moon ($1.62$), Mars ($3.72$), and Jupiter ($24.79$).
+- **Energy & Relativity**: Kinetic Energy ($E_k = \frac{1}{2}mv^2$), Gravitational Potential Energy ($U = mgh$), linear momentum ($p = mv$), and relativistic Lorentz factor ($\gamma = 1/\sqrt{1 - v^2/c^2}$).
+- **Wave & Circuit Analysis**: Ohm's Law and Power ($P = VI$), LC Resonant Frequency ($f_0 = \frac{1}{2\pi\sqrt{LC}}$).
+- **Direct Calculator Interconnect**: 1-click "Send to Calc" pipes any computed value into the main keypad display.
 
 ---
 
@@ -159,3 +189,6 @@ An ultra-modern, responsive, glassmorphic workstation application built with **R
 12. `feat(grapher): introduce interactive 2D function grapher with Cartesian canvas and coordinate tracking`
 13. `feat(stats): add tape statistics, multi-workspace navigation, and Phase 3 documentation`
 14. `feat(matrix): introduce Matrix Studio, Equation Solver, and Regression Lab for Phase 4`
+15. `feat(calculus): introduce Calculus & Numerical Methods Lab with Simpson integration, curvature, and Newton-Raphson solver`
+16. `feat(complex-physics): introduce Complex Numbers Studio with Argand plane and 2D/3D Geometry & Physics lab`
+17. `docs: document Phase 5 Calculus, Complex Numbers, and Physics workspaces in README`
