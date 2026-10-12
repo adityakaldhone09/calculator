@@ -6,6 +6,7 @@ import UnitConverter from './components/UnitConverter';
 import FinancialCalculator from './components/FinancialCalculator';
 import FunctionGrapher from './components/FunctionGrapher';
 import MatrixAlgebra from './components/MatrixAlgebra';
+import CalculusLab from './components/CalculusLab';
 import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
@@ -243,6 +244,19 @@ export default function App() {
             {activeTab === 'matrix' && (
               /* Matrix Studio & Linear Algebra Workspace */
               <MatrixAlgebra 
+                soundEnabled={soundEnabled}
+                onNotify={showToast}
+                onSendToCalculator={(val) => {
+                  setSelectedCalcValue(val);
+                  setActiveTab('calculator');
+                  showToast(`Transferred ${val} to Calculator!`, 'success');
+                }}
+              />
+            )}
+
+            {activeTab === 'calculus' && (
+              /* Calculus & Numerical Lab Workspace */
+              <CalculusLab 
                 soundEnabled={soundEnabled}
                 onNotify={showToast}
                 onSendToCalculator={(val) => {

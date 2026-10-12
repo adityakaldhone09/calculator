@@ -12,7 +12,8 @@ import {
   ArrowRightLeft,
   DollarSign,
   LineChart,
-  Grid3X3
+  Grid3X3,
+  Infinity as InfinityIcon
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -105,6 +106,15 @@ export default function Navbar({
             >
               <Grid3X3 size={15} />
               <span>Matrix</span>
+            </button>
+            <button
+              type="button"
+              className={`workspace-tab-btn ${activeTab === 'calculus' ? 'active' : ''}`}
+              onClick={() => onSelectTab('calculus')}
+              title="Calculus & Numerical Lab"
+            >
+              <InfinityIcon size={15} />
+              <span>Calculus</span>
             </button>
           </div>
         )}

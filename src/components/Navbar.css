@@ -79,11 +79,14 @@
 .navbar-workspace-tabs {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
   background: var(--bg-input);
   padding: 3px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   gap: 3px;
+  max-width: 100%;
 }
 
 .workspace-tab-btn {
