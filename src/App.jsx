@@ -7,6 +7,7 @@ import FinancialCalculator from './components/FinancialCalculator';
 import FunctionGrapher from './components/FunctionGrapher';
 import MatrixAlgebra from './components/MatrixAlgebra';
 import CalculusLab from './components/CalculusLab';
+import ComplexPhysicsLab from './components/ComplexPhysicsLab';
 import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
@@ -257,6 +258,19 @@ export default function App() {
             {activeTab === 'calculus' && (
               /* Calculus & Numerical Lab Workspace */
               <CalculusLab 
+                soundEnabled={soundEnabled}
+                onNotify={showToast}
+                onSendToCalculator={(val) => {
+                  setSelectedCalcValue(val);
+                  setActiveTab('calculator');
+                  showToast(`Transferred ${val} to Calculator!`, 'success');
+                }}
+              />
+            )}
+
+            {activeTab === 'complex' && (
+              /* Complex Numbers & Physics Workspace */
+              <ComplexPhysicsLab 
                 soundEnabled={soundEnabled}
                 onNotify={showToast}
                 onSendToCalculator={(val) => {

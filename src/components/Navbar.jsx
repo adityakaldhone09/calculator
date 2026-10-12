@@ -13,7 +13,8 @@ import {
   DollarSign,
   LineChart,
   Grid3X3,
-  Infinity as InfinityIcon
+  Infinity as InfinityIcon,
+  Compass
 } from 'lucide-react';
 import './Navbar.css';
 
@@ -115,6 +116,15 @@ export default function Navbar({
             >
               <InfinityIcon size={15} />
               <span>Calculus</span>
+            </button>
+            <button
+              type="button"
+              className={`workspace-tab-btn ${activeTab === 'complex' ? 'active' : ''}`}
+              onClick={() => onSelectTab('complex')}
+              title="Complex Numbers & Physics Lab"
+            >
+              <Compass size={15} />
+              <span>Complex & Geo</span>
             </button>
           </div>
         )}
