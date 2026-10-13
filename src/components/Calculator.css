@@ -167,12 +167,14 @@
 }
 
 .screen-action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: var(--radius-sm);
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
   background: var(--bg-button);
@@ -204,11 +206,11 @@
 }
 
 .mem-btn {
-  flex: 1;
-  height: 32px;
+  flex: 1 1 0;
+  height: 34px;
   border-radius: 6px;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-secondary);
   background: var(--bg-button);
@@ -217,6 +219,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .mem-btn:hover:not(:disabled) {
@@ -328,8 +331,12 @@
 /* Zero key */
 .key-zero {
   grid-column: span 2;
-  justify-content: flex-start;
-  padding-left: 26px;
+  justify-content: center;
+  padding: 0;
+}
+
+.prog-equals-wide {
+  grid-column: span 2;
 }
 
 /* Equals key (=) */

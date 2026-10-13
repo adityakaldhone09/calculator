@@ -881,7 +881,8 @@ export default function Calculator({
               title="Backspace / Delete last character"
               aria-label="Delete character"
             >
-              <Delete size={17} />
+              <Delete size={16} />
+              <span className="action-label">Del</span>
             </button>
 
             <button
@@ -1196,15 +1197,7 @@ export default function Calculator({
               </button>
               <button 
                 type="button" 
-                className="key-btn key-num"
-                disabled
-                title="Decimals not applicable in integer programmer mode"
-              >
-                .
-              </button>
-              <button 
-                type="button" 
-                className="key-btn key-equals"
+                className={`key-btn key-equals prog-equals-wide ${pressedKey === '=' ? 'active-press' : ''}`}
                 onClick={handleProgEquals}
               >
                 =

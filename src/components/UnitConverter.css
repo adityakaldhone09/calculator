@@ -160,7 +160,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 24px;
+  margin-top: 22px;
 }
 
 .swap-btn {
@@ -242,10 +242,12 @@
 }
 
 .converter-action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 14px;
+  height: 36px;
+  padding: 0 14px;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
   font-weight: 600;
