@@ -30,10 +30,12 @@
 }
 
 .cat-pill-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 14px;
+  height: 36px;
+  padding: 0 14px;
   border-radius: var(--radius-full);
   background: var(--bg-button);
   border: 1px solid var(--border-subtle);
@@ -41,6 +43,9 @@
   font-size: 0.82rem;
   font-weight: 600;
   white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
   transition: all var(--transition-fast);
 }
 

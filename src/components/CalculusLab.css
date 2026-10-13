@@ -62,28 +62,33 @@
 }
 
 .calculus-subtabs {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   background: var(--bg-input);
   padding: 4px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
 }
 
 .subtab-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  padding: 7px 14px;
-  border-radius: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
   transition: all var(--transition-fast);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .subtab-btn:hover {

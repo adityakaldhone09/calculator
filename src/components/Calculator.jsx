@@ -5,7 +5,8 @@ import {
   Check, 
   Sparkles,
   Cpu,
-  Binary
+  Binary,
+  Calculator as CalcIcon
 } from 'lucide-react';
 import { playKeyClick } from '../utils/audio';
 import './Calculator.css';
@@ -797,7 +798,8 @@ export default function Calculator({
               className={`mode-btn ${mode === 'standard' ? 'active' : ''}`}
               onClick={() => handleSelectMode('standard')}
             >
-              Standard
+              <CalcIcon size={13} />
+              <span>Standard</span>
             </button>
             <button
               type="button"

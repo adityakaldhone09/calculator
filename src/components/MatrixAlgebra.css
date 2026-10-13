@@ -88,19 +88,21 @@
 }
 
 .matrix-tab-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 9px 12px;
+  height: 36px;
+  padding: 0 12px;
   font-size: 0.82rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   background: transparent;
   transition: all var(--transition-fast);
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
+  user-select: none;
 }
 
 .matrix-tab-btn:hover {
