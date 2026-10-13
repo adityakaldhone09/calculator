@@ -7,17 +7,27 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: var(--glass-border);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
 }
 
 .navbar-container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+/* Primary Navbar Row */
+.navbar-main-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: 100%;
 }
 
 /* Brand */
@@ -26,6 +36,7 @@
   align-items: center;
   gap: 12px;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .navbar-logo-box {
@@ -37,6 +48,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 16px var(--accent-gradient-glow);
+  flex-shrink: 0;
 }
 
 .navbar-logo-icon {
@@ -55,6 +67,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .brand-glow {
@@ -73,31 +86,69 @@
   padding: 2px 7px;
   border-radius: var(--radius-full);
   border: 1px solid rgba(99, 102, 241, 0.25);
+  white-space: nowrap;
 }
 
-/* Workspace Mode Tabs */
+/* ---------------------------------------------------- */
+/* WORKSPACE TABS (DESKTOP & MOBILE TRACKS) */
+/* ---------------------------------------------------- */
 .navbar-workspace-tabs {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
+}
+
+.desktop-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   background: var(--bg-input);
   padding: 3px;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   border: 1px solid var(--border-subtle);
-  gap: 3px;
+  flex-shrink: 0;
+}
+
+.mobile-tabs {
+  display: none;
+  width: 100%;
+}
+
+.mobile-tabs-track {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-input);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   max-width: 100%;
 }
 
+.mobile-tabs-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual Tab Button */
 .workspace-tab-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 9px;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
   transition: all var(--transition-fast);
 }
 
@@ -110,27 +161,43 @@
   background: var(--bg-card-hover);
   color: var(--text-primary);
   border: 1px solid var(--border-medium);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
 }
 
-/* Controls */
+.tab-icon {
+  flex-shrink: 0;
+}
+
+.tab-label {
+  line-height: 1;
+}
+
+/* ---------------------------------------------------- */
+/* ACTION CONTROLS (SOUND, THEME, HISTORY) */
+/* ---------------------------------------------------- */
 .navbar-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .nav-action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  padding: 8px 14px;
+  height: 36px;
+  padding: 0 13px;
   background: var(--bg-button);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  font-size: 0.84rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
   transition: all var(--transition-fast);
 }
 
@@ -138,37 +205,131 @@
   background: var(--bg-button-hover);
   color: var(--text-primary);
   border-color: var(--border-medium);
+  transform: translateY(-1px);
 }
 
 .nav-action-btn.active {
   background: rgba(99, 102, 241, 0.14);
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.45);
   color: var(--accent-primary);
+}
+
+.nav-btn-label {
+  line-height: 1;
 }
 
 .history-pill {
   background: var(--accent-primary);
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 1px 6px;
+  padding: 0 6px;
+  height: 18px;
   border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   min-width: 18px;
-  text-align: center;
+  box-sizing: border-box;
 }
 
-/* Responsive Navbar */
-@media (max-width: 768px) {
-  .navbar-container {
-    padding: 10px 16px;
+/* ---------------------------------------------------- */
+/* RESPONSIVE LAYOUT BREAKPOINTS FOR ALL BROWSER RATIOS */
+/* ---------------------------------------------------- */
+
+/* Transition from single-line to 2-tier sub-bar for tablets & medium windows */
+@media (max-width: 1119px) {
+  .desktop-tabs {
+    display: none;
   }
 
-  .theme-text, 
-  .history-text {
-    display: none;
+  .mobile-tabs {
+    display: flex;
+    justify-content: center;
+  }
+
+  .mobile-tabs-track {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Compact screens and mobile devices */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 8px 14px;
+    gap: 8px;
   }
 
   .brand-badge {
     display: none;
   }
+
+  .mobile-tabs-track {
+    justify-content: flex-start;
+    scroll-snap-type: x mandatory;
+  }
+
+  .workspace-tab-btn {
+    scroll-snap-align: center;
+    padding: 0 11px;
+    font-size: 0.78rem;
+    height: 34px;
+  }
+
+  .nav-btn-label {
+    display: none;
+  }
+
+  .nav-action-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .history-btn {
+    position: relative;
+  }
+
+  .history-btn .history-pill {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    font-size: 0.65rem;
+    border: 2px solid var(--bg-card);
+  }
 }
+
+/* Extra small mobile screens */
+@media (max-width: 440px) {
+  .navbar-container {
+    padding: 6px 10px;
+  }
+
+  .navbar-logo-box {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-name {
+    font-size: 1.12rem;
+  }
+
+  .nav-action-btn {
+    width: 33px;
+    height: 33px;
+  }
+
+  .workspace-tab-btn {
+    height: 32px;
+    padding: 0 9px;
+    gap: 5px;
+    font-size: 0.75rem;
+  }
+}
+
