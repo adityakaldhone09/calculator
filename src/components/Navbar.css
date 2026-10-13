@@ -157,89 +157,6 @@
   text-align: center;
 }
 
-/* User Profile Section */
-.navbar-user-section {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.user-profile-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 12px 5px 6px;
-  background: var(--bg-button);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
-}
-
-.user-avatar-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4f46e5 0%, #ec4899 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
-}
-
-.user-details-box {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.user-name {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  max-width: 120px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-status-role {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-}
-
-.logout-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: var(--danger-accent);
-  font-size: 0.82rem;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-}
-
-.logout-action-btn:hover {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: var(--danger-accent);
-}
-
 /* Responsive Navbar */
 @media (max-width: 768px) {
   .navbar-container {
@@ -247,23 +164,11 @@
   }
 
   .theme-text, 
-  .history-text,
-  .logout-text,
-  .user-status-role {
+  .history-text {
     display: none;
   }
 
   .brand-badge {
-    display: none;
-  }
-
-  .user-profile-badge {
-    padding: 4px;
-    background: transparent;
-    border: none;
-  }
-
-  .user-details-box {
     display: none;
   }
 }

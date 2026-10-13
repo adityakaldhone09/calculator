@@ -2,7 +2,6 @@ import React from 'react';
 import { 
   Calculator, 
   History, 
-  LogOut, 
   Palette, 
   Sun,
   Moon,
@@ -19,8 +18,6 @@ import {
 import './Navbar.css';
 
 export default function Navbar({ 
-  user, 
-  onLogout, 
   theme, 
   onToggleTheme, 
   soundEnabled, 
@@ -167,33 +164,6 @@ export default function Navbar({
             {historyCount > 0 && (
               <span className="history-pill">{historyCount}</span>
             )}
-          </button>
-        </div>
-
-        {/* User Profile & Sign out */}
-        <div className="navbar-user-section">
-          <div className="user-profile-badge">
-            <div className="user-avatar-circle">
-              {user.avatar || 'U'}
-            </div>
-            <div className="user-details-box">
-              <span className="user-name">{user.name}</span>
-              <span className="user-status-role">
-                <span className="status-dot"></span>
-                {user.role || 'Member'}
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="logout-action-btn"
-            onClick={onLogout}
-            title="Sign out of CalcPulse"
-            aria-label="Sign out"
-          >
-            <LogOut size={17} />
-            <span className="logout-text">Exit</span>
           </button>
         </div>
       </div>

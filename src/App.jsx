@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Login from './components/Login';
 import Navbar from './components/Navbar';
 import Calculator from './components/Calculator';
 import UnitConverter from './components/UnitConverter';
@@ -12,15 +11,6 @@ import HistoryDrawer from './components/HistoryDrawer';
 import './App.css';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('calcpulse_session');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
   const [activeTab, setActiveTab] = useState('calculator'); // 'calculator' | 'converter'
 
   const [theme, setTheme] = useState(() => {
@@ -61,6 +51,18 @@ export default function App() {
     localStorage.setItem('calcpulse_history', JSON.stringify(history));
   }, [history]);
 
+  // Load backend history on mount
+  useEffect(() => {
+    fetch('/api/history')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.history && data.history.length > 0) {
+          setHistory(data.history);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => {
@@ -87,30 +89,6 @@ export default function App() {
     showToast(soundEnabled ? 'Tactile sounds muted' : 'Tactile sounds activated', 'info');
   };
 
-  const handleLoginSuccess = (user, rememberMe) => {
-    setCurrentUser(user);
-    if (rememberMe) {
-      localStorage.setItem('calcpulse_session', JSON.stringify(user));
-    }
-    showToast(`Welcome back, ${user.name}! Workspace ready.`, 'success');
-
-    // Fetch history from backend
-    fetch('/api/history')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.history && data.history.length > 0) {
-          setHistory(data.history);
-        }
-      })
-      .catch(() => {});
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('calcpulse_session');
-    showToast('Successfully logged out.', 'info');
-  };
-
   const handleAddHistory = (item) => {
     const entry = {
       ...item,
@@ -125,8 +103,7 @@ export default function App() {
       body: JSON.stringify({
         expression: item.expression,
         result: item.result,
-        timestamp: item.timestamp,
-        userId: currentUser?.id || 'guest'
+        timestamp: item.timestamp
       })
     }).catch(() => {});
   };
@@ -158,29 +135,20 @@ export default function App() {
         </div>
       )}
 
-      {!currentUser ? (
-        <Login 
-          onLoginSuccess={handleLoginSuccess} 
+      <div className="workspace-layout">
+        <Navbar 
           theme={theme}
           onToggleTheme={handleToggleTheme}
+          soundEnabled={soundEnabled}
+          onToggleSound={handleToggleSound}
+          historyCount={history.length}
+          onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
+          isHistoryOpen={isHistoryOpen}
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
         />
-      ) : (
-        <div className="workspace-layout">
-          <Navbar 
-            user={currentUser}
-            onLogout={handleLogout}
-            theme={theme}
-            onToggleTheme={handleToggleTheme}
-            soundEnabled={soundEnabled}
-            onToggleSound={handleToggleSound}
-            historyCount={history.length}
-            onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
-            isHistoryOpen={isHistoryOpen}
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-          />
 
-          <main className="main-content-area">
+        <main className="main-content-area">
             {activeTab === 'calculator' && (
               <>
                 {/* Calculator Workspace */}
@@ -294,7 +262,6 @@ export default function App() {
             onNotify={showToast}
           />
         </div>
-      )}
     </div>
   );
 }
