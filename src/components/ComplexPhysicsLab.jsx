@@ -754,6 +754,7 @@ export default function ComplexPhysicsLab({ soundEnabled, onNotify, onSendToCalc
                         onClick={() => {
                           handleSound('equals');
                           onSendToCalculator(complexResults.resRe.toFixed(4));
+                          onNotify?.(`Transferred Re(${complexResults.resRe.toFixed(4)}) to Calculator!`, 'success');
                         }}
                       >
                         <ArrowRight size={14} />
@@ -1264,6 +1265,7 @@ export default function ComplexPhysicsLab({ soundEnabled, onNotify, onSendToCalc
                         onClick={() => {
                           handleSound('equals');
                           onSendToCalculator(geomResults.primaryVal.toFixed(4));
+                          onNotify?.(`Transferred ${geomResults.primaryVal.toFixed(4)} to Calculator!`, 'success');
                         }}
                       >
                         <ArrowRight size={14} />
@@ -1476,6 +1478,7 @@ export default function ComplexPhysicsLab({ soundEnabled, onNotify, onSendToCalc
                         onClick={() => {
                           handleSound('equals');
                           onSendToCalculator(physicsResults.primaryVal.toFixed(3));
+                          onNotify?.(`Transferred ${physicsResults.primaryVal.toFixed(3)} to Calculator!`, 'success');
                         }}
                       >
                         <ArrowRight size={14} />

@@ -482,7 +482,7 @@ export default function CalculusLab({ soundEnabled, onNotify, onSendToCalculator
               <button 
                 type="button" 
                 className="chip-btn" 
-                onClick={() => loadIntegralPreset('sin(x)', 0, 3.14159)}
+                onClick={() => loadIntegralPreset('sin(x)', 0, Math.PI)}
               >
                 Half Sine Wave
               </button>

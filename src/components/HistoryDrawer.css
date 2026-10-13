@@ -176,6 +176,8 @@
 .export-action-btn:hover {
   background: var(--bg-button-hover);
   color: var(--text-primary);
+}
+
 .export-action-btn.active {
   background: var(--primary-accent);
   color: #ffffff;

@@ -432,6 +432,15 @@ export default function Calculator({
         return;
       }
 
+      if (!isFinite(result) || isNaN(result)) {
+        const errStr = isNaN(result) ? 'Error' : 'Error: Overflow';
+        setDisplay(errStr);
+        setPrevValue(null);
+        setOperator(null);
+        setWaitingForOperand(true);
+        return;
+      }
+
       const cleanResult = Number(result.toFixed(10));
       setDisplay(String(cleanResult));
       setPrevValue(cleanResult);
@@ -461,12 +470,21 @@ export default function Calculator({
       return;
     }
 
+    if (!isFinite(result) || isNaN(result)) {
+      const errStr = isNaN(result) ? 'Error' : 'Error: Overflow';
+      setDisplay(errStr);
+      setExpression(`${prevValue} ${operator} ${inputValue} =`);
+      setPrevValue(null);
+      setOperator(null);
+      setWaitingForOperand(true);
+      return;
+    }
+
     const cleanResult = Number(result.toFixed(10));
     const fullExpr = `${prevValue} ${operator} ${inputValue}`;
     
     setDisplay(String(cleanResult));
     setExpression(`${fullExpr} =`);
-    setLastResult(cleanResult);
 
     // Save to calculation history
     onAddHistory?.({
@@ -637,59 +655,81 @@ export default function Calculator({
     setTimeout(() => setCopied(false), 1600);
   };
 
-  // Keyboard support listener
+  // Stabilize keyboard shortcuts via ref
+  const keyHandlersRef = useRef({});
+  useEffect(() => {
+    keyHandlersRef.current = {
+      mode,
+      progBase,
+      handleProgDigit,
+      handleProgOperator,
+      handleProgEquals,
+      handleProgBackspace,
+      handleProgClear,
+      inputDigit,
+      inputDecimal,
+      handleOperator,
+      handleEquals,
+      handleBackspace,
+      clearAll,
+      handlePercentage
+    };
+  });
+
+  // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't intercept if user is focused on an input elsewhere
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      // ignore typing if focus is inside an input/textarea
+      if (['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
 
+      const handlers = keyHandlersRef.current;
       const { key } = e;
 
-      if (mode === 'programmer') {
+      if (handlers.mode === 'programmer') {
         const upper = key.toUpperCase();
         if (/^[0-9]$/.test(key)) {
           const num = Number(key);
-          const valid = (progBase === 'BIN' && num <= 1) || (progBase === 'OCT' && num <= 7) || progBase === 'DEC' || progBase === 'HEX';
+          const valid = (handlers.progBase === 'BIN' && num <= 1) || (handlers.progBase === 'OCT' && num <= 7) || handlers.progBase === 'DEC' || handlers.progBase === 'HEX';
           if (valid) {
             e.preventDefault();
-            handleProgDigit(key);
+            handlers.handleProgDigit(key);
           }
-        } else if (progBase === 'HEX' && /^[A-F]$/.test(upper)) {
+        } else if (handlers.progBase === 'HEX' && /^[A-F]$/.test(upper)) {
           e.preventDefault();
-          handleProgDigit(upper);
+          handlers.handleProgDigit(upper);
         } else if (key === '+' || key === '-') {
           e.preventDefault();
-          handleProgOperator(key);
+          handlers.handleProgOperator(key);
         } else if (key === '*') {
           e.preventDefault();
-          handleProgOperator('×');
+          handlers.handleProgOperator('×');
         } else if (key === '/') {
           e.preventDefault();
-          handleProgOperator('÷');
+          handlers.handleProgOperator('÷');
         } else if (key === '%') {
           e.preventDefault();
-          handleProgOperator('MOD');
+          handlers.handleProgOperator('MOD');
         } else if (key === '&') {
           e.preventDefault();
-          handleProgOperator('AND');
+          handlers.handleProgOperator('AND');
         } else if (key === '|') {
           e.preventDefault();
-          handleProgOperator('OR');
+          handlers.handleProgOperator('OR');
         } else if (key === '^') {
           e.preventDefault();
-          handleProgOperator('XOR');
+          handlers.handleProgOperator('XOR');
         } else if (key === '~') {
           e.preventDefault();
-          handleProgOperator('NOT');
+          handlers.handleProgOperator('NOT');
         } else if (key === '=' || key === 'Enter') {
           e.preventDefault();
-          handleProgEquals();
+          handlers.handleProgEquals();
         } else if (key === 'Backspace') {
           e.preventDefault();
-          handleProgBackspace();
+          handlers.handleProgBackspace();
         } else if (key === 'Escape') {
           e.preventDefault();
-          handleProgClear();
+          handlers.handleProgClear();
         }
         return;
       }
@@ -697,52 +737,37 @@ export default function Calculator({
       // Standard / Scientific keyboard handling
       if (/^[0-9]$/.test(key)) {
         e.preventDefault();
-        inputDigit(Number(key));
+        handlers.inputDigit(Number(key));
       } else if (key === '.') {
         e.preventDefault();
-        inputDecimal();
+        handlers.inputDecimal();
       } else if (key === '+' || key === '-') {
         e.preventDefault();
-        handleOperator(key);
+        handlers.handleOperator(key);
       } else if (key === '*') {
         e.preventDefault();
-        handleOperator('×');
+        handlers.handleOperator('×');
       } else if (key === '/') {
         e.preventDefault();
-        handleOperator('÷');
+        handlers.handleOperator('÷');
       } else if (key === '=' || key === 'Enter') {
         e.preventDefault();
-        handleEquals();
+        handlers.handleEquals();
       } else if (key === 'Backspace') {
         e.preventDefault();
-        handleBackspace();
+        handlers.handleBackspace();
       } else if (key === 'Escape') {
         e.preventDefault();
-        clearAll();
+        handlers.clearAll();
       } else if (key === '%') {
         e.preventDefault();
-        handlePercentage();
+        handlers.handlePercentage();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    mode,
-    progBase,
-    handleProgDigit,
-    handleProgOperator,
-    handleProgEquals,
-    handleProgBackspace,
-    handleProgClear,
-    inputDigit,
-    inputDecimal,
-    handleOperator,
-    handleEquals,
-    handleBackspace,
-    clearAll,
-    handlePercentage
-  ]);
+  }, []);
 
   // Calculate dynamic font size to prevent text overflow for long numbers
   const getDisplayFontSize = () => {
