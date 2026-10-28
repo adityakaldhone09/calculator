@@ -1,21 +1,57 @@
-# CalcPulse — Modern Responsive Calculator & Workspace
+# CalcPulse — Modern Responsive Calculator & Scientific Engineering Workstation
 
-An ultra-modern, responsive, glassmorphic workstation application built with **React**, **Vite**, and **Vanilla CSS**. Designed with rich aesthetics, sleek theme modes, direct workspace access, interactive calculation history, financial engineering, function graphing, calculus lab, and base-N programmer modes.
+CalcPulse is an ultra-modern, responsive, glassmorphic workstation application built with **React 19**, **Vite 8**, **Express 5**, and **Vanilla CSS**. Designed with rich aesthetics, sleek theme modes, direct workspace access, interactive calculation history tape, financial engineering, 2D function graphing, calculus lab, base-N programmer modes, matrix studio, and complex/physics tools.
 
 ---
 
-## ✨ Features
+## 🏗️ Architecture & Production Design
+
+CalcPulse is architected for clean local development and unified single-service cloud production deployment (such as Render Web Services):
+
+- **Unified Single Web Service**: In production, the Express 5 backend server directly serves both the compiled static React 19 frontend assets from `dist/` and the backend REST API endpoints under `/api`.
+- **API Precedence & Routing**: All API routes are evaluated first. Any unknown `/api/*` route immediately returns a structured JSON 404 response. Valid client-side Single Page Application (SPA) routes fallback to `index.html` without intercepting API calls or static assets.
+- **Port & Host Binding**: Express binds dynamically to `process.env.PORT` (or default `5001`) on `0.0.0.0` as required by Render, container runtimes, and Linux web hosts.
+- **Local Development**: Vite proxies `/api` calls to `http://localhost:5001`, allowing hot module reloading for the frontend during development while communicating with the backend.
+
+```
+                           +---------------------------+
+                           |    Client Browser         |
+                           +-------------+-------------+
+                                         |
+                       Same-Origin HTTP / HTTPS Requests
+                                         |
+                                         v
+                     +---------------------------------------+
+                     |  Render Node.js Web Service (Express) |
+                     |         Port: $PORT, Bind: 0.0.0.0    |
+                     +-------------------+-------------------+
+                                         |
+                +------------------------+------------------------+
+                |                                                 |
+                v                                                 v
+      /api/* Routes                                        Static Assets / SPA
+  - /api/health                                            - /assets/* (JS, CSS)
+  - /api/history (Tape)                                    - /favicon.svg, /icons.svg
+  - /api/converter/rates                                   - Fallback: index.html
+  - /api/financial/* (EMI, Compound)
+  - /api/matrix/analyze
+  - /api/equations/quadratic
+  - Unmatched /api/* -> JSON 404
+```
+
+---
+
+## ✨ Verified Features
 
 ### 1. ⚡ Direct Workspace Access & Streamlined Architecture
-- **Instant Workspace Launch**: Direct entry into calculations without sign-in barriers or role restrictions.
+- **Instant Workspace Launch**: Direct entry into calculations without sign-in barriers.
 - **Unified Calculation Tape**: Automatic sync with backend tape history and local persistence.
-- **Multi-Theme Customization**: 1-click cycling across all 4 glassmorphic themes.
-- **Tactile Audio Engine**: Low-latency mechanical click feedback with instantaneous mute toggle.
+- **Multi-Theme Customization**: 1-click cycling across all 4 glassmorphic themes (Aurora Dark, Cyber Neon, Slate Dark, Frost White).
+- **Tactile Audio Engine**: Synthesized mechanical click feedback powered by the **Web Audio API** (zero external audio files).
 
 ### 2. 🧮 Core Calculator Workspace
 - **Responsive Layout**: Designed for mobile screens, tablets, and wide monitors.
 - **Standard & Scientific Modes**: Instant switch to access square root (`√`), power (`xʸ`), square (`x²`), reciprocal (`1/x`), and constant (`π`).
-- **Tactile Sound Effects**: Synthesized low-latency mechanical click feedback powered by the **Web Audio API** (with 1-click mute toggle).
 - **Physical Keyboard Shortcuts**:
   - `0 - 9`: Number input
   - `.`: Decimal point
@@ -24,150 +60,198 @@ An ultra-modern, responsive, glassmorphic workstation application built with **R
   - `Backspace`: Delete previous digit
   - `Escape`: Clear all (AC)
   - `%`: Percentage calculation
-- **Auto-Scaling Typography**: Display dynamically adjusts font sizes to prevent number clipping.
-- **Clipboard Integration**: 1-click copy for current results with floating toast notification.
+- **Auto-Scaling Typography**: Dynamic font adjustment preventing display truncation.
+- **Clipboard Integration**: 1-click copy with floating toast alerts.
 
-### 3. 🎨 Multi-Theme Design System
-- **Frost White**: Pure, frosted glass white mode with high-contrast slate typography, luminous pastel glow, and clean borders.
-- **Aurora Dark** (Default): Radiant indigo and pink ambient glow over deep obsidian.
-- **Cyber Neon**: Electric cyan, blue, and hot magenta cybernetic styling.
-- **Slate Dark**: Subtle deep slate with blue accents for distraction-free sessions.
+### 3. 🔬 Advanced Scientific & Memory Suite
+- **Hardware Memory Engine**: `MC`, `MR`, `M+`, `M-`, and `MS` with active `M` memory pill badge.
+- **Trigonometry**: Angle switcher between `DEG` (Degrees) and `RAD` (Radians) with precision `sin`, `cos`, and `tan`.
+- **Extended Math**: Natural log (`ln`), base-10 log (`log`), exponential (`eˣ`, `10ˣ`), powers & roots (`x²`, `x³`, `xʸ`, `√x`, `∛x`, `1/x`), factorial (`n!`), absolute value (`|x|`), constants (`π`, `e`), and random generator (`rand`).
 
-### 4. 🔬 Advanced Scientific & Memory Suite (Phase 2)
-- **Memory Engine**: Instant hardware-style `MC` (Clear), `MR` (Recall), `M+` (Add), `M-` (Subtract), and `MS` (Store) with active `M` memory pill badge in the screen.
-- **Trigonometry**: Angle mode switcher between `DEG` (Degrees) and `RAD` (Radians) with precision `sin`, `cos`, and `tan` functions.
-- **Extended Functions**: Natural log (`ln`), base-10 log (`log`), exponential (`eˣ`, `10ˣ`), powers & roots (`x²`, `x³`, `xʸ`, `√x`, `∛x`, `1/x`), factorial (`n!`), absolute value (`|x|`), constants (`π`, `e`), and random generator (`rand`).
-
-### 5. 🔄 Multi-Category Unit & Currency Converter (Phase 2)
-- **6 Essential Categories**:
-  - 💱 **Currency**: Live exchange rates for USD, EUR, GBP, JPY, INR, CAD, AUD, CHF, and CNY.
-  - 📏 **Length**: km, m, cm, mm, miles, yards, feet, inches.
-  - ⚖️ **Mass & Weight**: Metric tons, kg, g, mg, pounds, ounces.
-  - 🌡️ **Temperature**: Celsius (°C), Fahrenheit (°F), Kelvin (K).
-  - 💾 **Digital Storage**: Bytes, KB, MB, GB, TB, PB.
-  - ⏱️ **Time**: Milliseconds, seconds, minutes, hours, days, weeks.
-- **Bidirectional Unit Swap**: 1-click swap button (⇄) with tactile feedback and micro-animation.
+### 4. 🔄 Multi-Category Unit & Currency Converter
+- **6 Categories**: Currency (USD, EUR, GBP, JPY, INR, CAD, AUD, CHF, CNY), Length, Mass/Weight, Temperature, Digital Storage, and Time.
+- **Bidirectional Unit Swap**: 1-click swap button (⇄) with tactile feedback.
 - **Send to Calculator**: Instantly transfer converted figures directly into the calculator display.
 
-### 6. 💻 Programmer / Base-N Calculator & Interactive Bitboard (New in Phase 3)
-- **Simultaneous 4-Base Readouts**: Live synchronized displays for **HEX** (Hexadecimal), **DEC** (Decimal), **OCT** (Octal), and **BIN** (Binary formatted in 4-bit nibbles).
-- **Interactive 32-Bit Bitboard**: Click any individual bit cell ($31 \dots 0$) to toggle its binary state ($0 \leftrightarrow 1$) with instant value updates and auditory click feedback.
-- **Word Width Engine**: Support for **QWORD (64-bit)**, **DWORD (32-bit)**, **WORD (16-bit)**, and **BYTE (8-bit)** with automatic bitwise masking.
-- **Bitwise Suite**: Dedicated operations for `AND (&)`, `OR (|)`, `XOR (^)`, `NOT (~)`, `Lsh (<<)`, `Rsh (>>)`, and `MOD (%)`.
-- **Dynamic Hex Keypad**: Keys `A - F` dynamically enabled or disabled based on active base, with dedicated numeric filtering in BIN and OCT bases.
+### 5. 💻 Programmer / Base-N Calculator & Interactive Bitboard
+- **Simultaneous 4-Base Readouts**: Synchronized displays for **HEX**, **DEC**, **OCT**, and **BIN** (formatted in 4-bit nibbles).
+- **Interactive 32-Bit Bitboard**: Click any individual bit cell ($31 \dots 0$) to toggle binary states with instant value updates.
+- **Word Width Engine**: **QWORD (64-bit)**, **DWORD (32-bit)**, **WORD (16-bit)**, and **BYTE (8-bit)** with bitwise masking.
+- **Bitwise Suite**: `AND (&)`, `OR (|)`, `XOR (^)`, `NOT (~)`, `Lsh (<<)`, `Rsh (>>)`, and `MOD (%)`.
 
-### 7. 💰 Financial & Investment Suite (New in Phase 3)
-- **Loan & EMI Calculator**: Computes Monthly EMI, Total Interest, and Total Payable with interactive Principal vs Interest progress breakdown meters. Built-in presets for Auto Loans, 30-Yr Mortgages, and Personal Loans.
-- **Compound Interest & Wealth SIP**: Projections for initial deposits, monthly contributions, annual return rates, and compounding frequencies (monthly, quarterly, annually).
-- **Tip & Bill Splitter**: Quick tip percentages (10%, 15%, 18%, 20%, 25%, custom) and guest counter stepper, showing per-person bill and per-person tip.
-- **Send to Calculator**: 1-click transfer button transports any calculated financial figure directly into the main calculator.
+### 6. 💰 Financial & Investment Suite
+- **Loan & EMI Calculator**: Computes Monthly EMI, Total Interest, and Total Payable with interactive Principal vs Interest meters. Zero-interest and variable interest rates supported safely.
+- **Compound Interest & Wealth SIP**: Projections for initial deposits, monthly contributions, annual return rates, and compounding frequencies.
+- **Tip & Bill Splitter**: Quick tip percentages (10%, 15%, 18%, 20%, 25%, custom) and guest counter stepper.
+- **Send to Calculator**: 1-click transfer button transports calculated figures directly into the main calculator.
 
-### 8. 📈 Interactive 2D Function Grapher & Plotter (New in Phase 3)
+### 7. 📈 Interactive 2D Function Grapher & Plotter
 - **Cartesian Canvas Engine**: High-DPI 2D canvas with grid lines, numeric axis markers, and neon curve glowing.
-- **Safe Dynamic Math Evaluator**: Supports trigonometric functions (`sin`, `cos`, `tan`), polynomials, radicals (`sqrt`), exponentials (`exp`), logarithms, and rational curves.
+- **Hardened Math Evaluator**: Token-whitelisted mathematical parser preventing arbitrary script execution while supporting trigonometric, polynomial, radical, exponential, and rational curves.
 - **Coordinate Crosshair Inspection**: Real-time cursor tracker with coordinate badge displays exact $(x, f(x))$ values.
 - **Interactive View Controls**: Pan and drag navigation, Zoom In (`+`), Zoom Out (`-`), and origin reset controls.
-- **Sample Value Table**: Collapsible discrete table of values with 1-click values transfer to the active calculator display.
 
-### 9. 📜 Calculation Tape & Quick Statistics Engine (New in Phase 3)
+### 8. 📜 Calculation Tape & History Engine
 - **Live Search**: Instant text filtering for mathematical expressions and results.
 - **Single Item Deletion**: Delete individual entries directly from the drawer tape.
-- **Quick Numerical Statistics**: Live computation of Count ($N$), Sum ($\Sigma$), Mean / Average ($\mu$), Min, and Max across the calculation session with 1-click transfer to keypad.
+- **Quick Numerical Statistics**: Live computation of Count ($N$), Sum ($\Sigma$), Mean ($\mu$), Min, and Max across the calculation session.
 - **CSV & Tape Export**: Export full calculation tape to CSV spreadsheet or copy formatted text tape.
 
-### 10. 📐 Matrix Studio & Linear Algebra Engine (New in Phase 4)
-- **Dynamic Matrix Grids**: Configurable dimensions for Matrix A and Matrix B (from $1\times 1$ up to $4\times 4$) with live glowing bracket layout.
+### 9. 📐 Matrix Studio & Linear Algebra Engine
+- **Dynamic Matrix Grids**: Configurable dimensions for Matrix A and Matrix B (from $1\times 1$ up to $4\times 4$).
 - **Matrix Operations**: Matrix addition ($A + B$), subtraction ($A - B$), matrix multiplication ($A \times B$), and scalar multiplication ($k \cdot A$).
-- **Unary Transformations**:
-  - Determinant ($\det(A)$) for square matrices with singularity validation.
-  - Matrix Inverse ($A^{-1}$) via Gauss-Jordan elimination.
-  - Transpose ($A^T$) and Trace ($\operatorname{tr}(A)$).
-- **Matrix Utilities**: Swap $A \leftrightarrow B$, 1-click result loading back into Matrix A or B, identity presets, random generators, and "Send to Calculator".
+- **Unary Transformations**: Determinant ($\det(A)$), Inverse ($A^{-1}$), Transpose ($A^T$), and Trace ($\operatorname{tr}(A)$) with singularity protection.
 
-### 11. 🧮 Polynomial & Linear Systems Equation Solver (New in Phase 4)
-- **Quadratic Equations ($ax^2 + bx + c = 0$)**: Instant discriminant ($\Delta = b^2 - 4ac$), real distinct roots, repeated root, or complex conjugate roots ($u \pm vi$), along with parabola vertex $(h, k)$ and curve concavity.
+### 10. 🧮 Polynomial & Linear Systems Equation Solver
+- **Quadratic Equations ($ax^2 + bx + c = 0$)**: Instant discriminant ($\Delta = b^2 - 4ac$), real distinct roots, repeated root, or complex conjugate roots ($u \pm vi$), along with parabola vertex $(h, k)$.
 - **Cubic Equations ($ax^3 + bx^2 + cx + d = 0$)**: Solves all three roots (real and complex) using Cardano's analytical method.
-- **$2 \times 2$ & $3 \times 3$ Linear System Solvers**: Solves multi-variable systems in $(x, y)$ and $(x, y, z)$ using Cramer's determinant rule and Gaussian elimination with automatic singularity and inconsistency detection.
-- **Result Transfer**: 1-click button to pipe any calculated root or variable directly into the main calculator.
+- **$2 \times 2$ & $3 \times 3$ Linear System Solvers**: Solves multi-variable systems in $(x, y)$ and $(x, y, z)$ using Cramer's rule and Gaussian elimination with singularity detection.
 
-### 12. 📊 Statistical Analysis & Linear Regression Lab (Phase 4)
-- **Descriptive Statistics**: Analyzes datasets with sample count ($n$), sum ($\Sigma x$), mean ($\mu$), median, mode, sample and population standard deviations ($s, \sigma$), variance ($s^2, \sigma^2$), range, quartiles ($Q_1, Q_3$), and IQR.
+### 11. 📊 Statistical Analysis & Linear Regression Lab
+- **Descriptive Statistics**: Sample count ($n$), sum ($\Sigma x$), mean ($\mu$), median, mode, standard deviations ($s, \sigma$), variance ($s^2, \sigma^2$), range, quartiles ($Q_1, Q_3$), and IQR.
 - **Bivariate Linear Regression**: Evaluates $(x, y)$ coordinate pairs, determines best-fit equation ($y = mx + c$), Pearson correlation ($r$), and coefficient of determination ($R^2$).
-- **Interactive Predictor Tool**: Enter arbitrary $x$ coordinates to estimate predicted $\hat{y}$ values and send results into the calculator.
 
-### 13. ♾️ Calculus & Numerical Quadrature Suite (New in Phase 5)
-- **Numerical Definite Integration ($\int_a^b f(x)\,dx$)**:
-  - **Simpson's 1/3 Rule**: Fourth-order parabolic quadrature with even subinterval subdivisions ($n = 4 \dots 1000$).
-  - **Trapezoidal & Midpoint Rules**: Linear interpolation with estimated error $|S_n - T_n|/3$ and Mean Value Theorem average $\bar{f} = \frac{1}{b-a}\int_a^b f(x)dx$.
-  - **Riemann Area Visualizer (SVG)**: Real-time dynamic SVG graph rendering the region under $f(x)$ bounded between $x = a$ and $x = b$ with ambient neon glow.
-  - **Built-in Presets**: Standard Normal Gaussian distribution ($\int_0^{1.5} e^{-x^2}dx$), Cubic polynomial ($\int_0^3 (x^3 - 3x + 2)dx$), Half Sine wave ($\int_0^\pi \sin(x)dx$), and Arctan ($\int_0^1 \frac{1}{1+x^2}dx = \frac{\pi}{4}$).
-- **Differential & Curvature Engine**:
-  - **Central Finite Difference 5-Point Stencil**: Computes high-precision first derivative $f'(x_0) = \frac{-f(x+2h) + 8f(x+h) - 8f(x-h) + f(x-2h)}{12h}$.
-  - **Second Derivative & Concavity**: Evaluates $f''(x_0)$, identifying concave up ($\cup$), concave down ($\cap$), or inflection points ($\sim$).
-  - **Tangent & Normal Lines**: Generates exact Cartesian equations ($y = mx + c$) for tangent lines and perpendicular normal lines.
-  - **Curvature & Osculating Radius**: Computes differential curvature $\kappa = \frac{|f''(x_0)|}{(1 + f'(x_0)^2)^{3/2}}$ and radius of curvature $R = 1/\kappa$.
-- **Numerical Root Finding Suite**:
-  - **Newton-Raphson Method ($x_{k+1} = x_k - \frac{f(x_k)}{f'(x_k)}$)**: Rapid quadratic convergence with configurable initial guess $x_0$, tolerance $\varepsilon$, and maximum iteration limit.
-  - **Bisection Bracket Method**: Interval halving algorithm with sign-change validation across $[a, b]$.
-  - **Step-by-Step Convergence Trace**: Interactive audit table recording estimate $x_k$, evaluation $f(x_k)$, derivative $f'(x_k)$, and step delta $|\Delta x_k|$.
+### 12. ♾️ Calculus & Numerical Quadrature Suite
+- **Numerical Definite Integration ($\int_a^b f(x)\,dx$)**: Simpson's 1/3 Rule, Trapezoidal Rule, Midpoint Rule, and dynamic SVG Riemann visualizer.
+- **Differential & Curvature Engine**: Central finite difference 5-point stencil for $f'(x_0)$ and $f''(x_0)$, concavity detection, tangent/normal lines, and curvature radius.
+- **Numerical Root Finding Suite**: Newton-Raphson method and Bisection bracket method with convergence trace tables.
 
-### 14. 🧭 Complex Numbers & Argand Vector Plane (New in Phase 5)
-- **Dual Coordinate Representation**: Seamless rectangular ($a + bi$) and polar ($r \angle \theta^\circ$) coordinates for $z_1$ and $z_2$.
-- **Complex Arithmetic Engine**: Complex addition ($z_1 + z_2$), subtraction ($z_1 - z_2$), multiplication ($z_1 \cdot z_2$), and division ($z_1 / z_2$) with singularity protection.
-- **Powers & De Moivre Roots**: Computes integer powers $z^n$ and all $n$ distinct complex roots $\sqrt[n]{z} = \sqrt[n]{r}\left(\cos\frac{\theta + 2k\pi}{n} + i\sin\frac{\theta + 2k\pi}{n}\right)$.
-- **Interactive Argand Vector Plane (SVG)**: Visual coordinate canvas displaying real ($Re$) and imaginary ($Im$) axes, concentric magnitude rings, and glowing directional vectors for $z_1$ (blue), $z_2$ (magenta), and Result $z_{res}$ (emerald green).
+### 13. 🧭 Complex Numbers & Argand Vector Plane
+- **Dual Representation**: Rectangular ($a + bi$) and polar ($r \angle \theta^\circ$).
+- **Complex Arithmetic**: Addition, subtraction, multiplication, division, powers, and roots.
+- **Interactive Argand Vector Plane (SVG)**: Visual coordinate canvas displaying real ($Re$) and imaginary ($Im$) axes and glowing directional vectors.
 
-### 15. 📐 Spatial Geometry & Classical/Relativistic Physics Lab (New in Phase 5)
-- **2D Planar Shapes**: Circle ($A = \pi r^2, C = 2\pi r$), Ellipse (Ramanujan perimeter approximation and eccentricity), Triangle (Heron's formula, inradius $r = A/s$, and circumradius $R$), Trapezoid, and Regular $n$-sided polygon.
-- **3D Spatial Solids**: Sphere, Right Circular Cylinder, Right Circular Cone, Torus (donut ring), Rectangular Cuboid, and Square Pyramid with live volume and surface area breakdowns.
-- **Ballistic Projectile Motion**: Computes Flight Time ($T$), Maximum Height ($H$), Horizontal Range ($R$), initial velocity components, and dynamic trajectory parabola curve. Presets for Earth ($9.81\text{ m/s}^2$), Moon ($1.62$), Mars ($3.72$), and Jupiter ($24.79$).
-- **Energy & Relativity**: Kinetic Energy ($E_k = \frac{1}{2}mv^2$), Gravitational Potential Energy ($U = mgh$), linear momentum ($p = mv$), and relativistic Lorentz factor ($\gamma = 1/\sqrt{1 - v^2/c^2}$).
-- **Wave & Circuit Analysis**: Ohm's Law and Power ($P = VI$), LC Resonant Frequency ($f_0 = \frac{1}{2\pi\sqrt{LC}}$).
-- **Direct Calculator Interconnect**: 1-click "Send to Calc" pipes any computed value into the main keypad display.
+### 14. 📐 Spatial Geometry & Classical/Relativistic Physics Lab
+- **2D Planar Shapes**: Circle, Ellipse, Triangle, Trapezoid, and Regular $n$-sided polygon.
+- **3D Spatial Solids**: Sphere, Cylinder, Cone, Torus, Cuboid, and Square Pyramid.
+- **Ballistic Projectile Motion**: Trajectory flight time, maximum height, horizontal range, with presets for Earth, Moon, Mars, and Jupiter.
+- **Energy & Relativity**: Kinetic energy, potential energy, momentum, and Lorentz factor ($\gamma$).
+- **Wave & Circuit Analysis**: Ohm's Law and LC resonant frequency.
 
 ---
 
-## 🚀 Getting Started
+## 📋 Prerequisites & Supported Node Version
 
-### Prerequisites
-- Node.js (v18+)
-- npm or yarn
-
-### Installation & Run
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/adityakaldhone09/calculator.git
-   cd calculator
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Launch development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Launch backend API server:
-   ```bash
-   npm run server
-   ```
-
-5. Build for production:
-   ```bash
-   npm run build
-   ```
+- **Node.js**: `>=20.0.0` (Recommended: Node 20 LTS, 22 LTS, or 24 Current)
+- **Package Manager**: `npm` (v10+ or v11+)
 
 ---
 
-## 🛠️ Tech Stack
-- **Framework**: React 19
-- **Bundler & Tooling**: Vite 8
-- **Styling**: Vanilla CSS Design Tokens & Glassmorphism
-- **Backend API**: Express 5 & Node.js
-- **Icons**: Lucide React
-- **Audio**: Web Audio API (zero external assets)
+## 🛠️ Local Development & Scripts
 
+### 1. Install dependencies
+```bash
+npm ci
+```
+
+### 2. Development Mode
+Run both frontend and backend concurrently in separate terminals or as background processes:
+
+```bash
+# Terminal 1: Backend API (runs on http://localhost:5001)
+npm run server
+
+# Terminal 2: Frontend Vite dev server (runs on http://localhost:5173 with proxy)
+npm run dev
+```
+
+### 3. Build & Production Verification
+```bash
+# Compile React frontend into dist/
+npm run build
+
+# Start production Express server (serves frontend + API)
+npm start
+```
+
+### 4. Linting & Automated Tests
+```bash
+# Code quality check via oxlint
+npm run lint
+
+# Automated test suite (API endpoints, math engine, security checks)
+npm test
+
+# Full production server startup & HTTP smoke test
+node test/smoke.js
+```
+
+---
+
+## ⚙️ Environment Variables Reference
+
+| Variable | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `PORT` | Number | `5001` (Dev) / `10000` (Render) | Server port. Automatically injected by Render Web Services. |
+| `NODE_ENV` | String | `'development'` | Environment mode (`'production'` or `'development'`). |
+| `CORS_ORIGIN` | String | `undefined` | Optional comma-separated allowed CORS origins (e.g. `https://example.com`). If not set in production, same-origin requests are permitted. |
+
+---
+
+## 🚀 Render Deployment Guide
+
+### Method A: Blueprint Deployment using `render.yaml` (Recommended)
+
+1. Push your repository to GitHub.
+2. In the [Render Dashboard](https://dashboard.render.com), click **New +** -> **Blueprint**.
+3. Select your repository.
+4. Render detects `render.yaml` and sets up the Web Service:
+   - **Environment**: Node.js
+   - **Build Command**: `npm ci && npm run build`
+   - **Start Command**: `npm start`
+   - **Health Check Path**: `/api/health`
+5. Click **Apply**. Render will automatically build the assets and start the application.
+
+### Method B: Manual Web Service Setup on Render
+
+1. Log in to [Render Dashboard](https://dashboard.render.com).
+2. Click **New +** -> **Web Service**.
+3. Connect your GitHub repository.
+4. Set the configuration:
+   - **Name**: `calcpulse`
+   - **Runtime**: `Node`
+   - **Branch**: `main`
+   - **Region**: Oregon (or preferred region)
+   - **Build Command**: `npm ci && npm run build`
+   - **Start Command**: `npm start`
+   - **Instance Type**: `Free`
+5. Under **Advanced Settings**:
+   - Add Environment Variable: `NODE_ENV` = `production`
+   - Set **Health Check Path**: `/api/health`
+   - Set **Auto-Deploy**: `Yes`
+6. Click **Create Web Service**.
+
+---
+
+## 🏥 Health Check Endpoint & Troubleshooting
+
+### Health Check
+- **Endpoint**: `GET /api/health`
+- **Response Format**:
+  ```json
+  {
+    "status": "online",
+    "service": "CalcPulse Backend API",
+    "uptime": 124,
+    "timestamp": "2026-10-28T19:15:00.000Z",
+    "environment": "production"
+  }
+  ```
+
+### Common Issues & Troubleshooting
+1. **Port Binding / Web Service timeout on Render**:
+   - CalcPulse binds to `0.0.0.0` and listens on `process.env.PORT` dynamically. Ensure the start command is `npm start`.
+2. **Missing Frontend Build (`CalcPulse client build not found`)**:
+   - Ensure your build command includes `npm run build` (`npm ci && npm run build`).
+3. **CORS issues on custom domains**:
+   - If hosting the API on a separate domain from the frontend, supply `CORS_ORIGIN=https://myfrontend.com` in your service environment variables.
+
+---
+
+## 💾 Data Persistence & Scaling Considerations
+
+The calculation history tape is currently managed in an in-memory server store capped at the last 50 calculations, synchronized with the browser client state and `localStorage`.
+
+- **Current Behavior**: Calculation entries persist across client reloads and can be cleared or deleted item-by-item.
+- **Production Ephemeral Container Note**: In Render Free tier or container restarts/scale-to-zero cycles, in-memory backend history resets to seed data. Local browser client tape is preserved in `localStorage`.
+- **Scaling Recommendation**: For multi-instance horizontal scaling or durable long-term storage across server deployments, connect a managed persistent store such as a Render PostgreSQL database or Redis instance without relying on local ephemeral disk files.
