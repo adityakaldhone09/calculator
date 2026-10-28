@@ -8,9 +8,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.resolve(__dirname, '../dist');
 
-const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = Number(process.env.PORT) || 10000;
 const HOST = '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`CalcPulse server listening on ${HOST}:${PORT}`);
+});
 
 // Configurable CORS: allow all or explicit origins
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -208,7 +211,7 @@ app.post('/api/financial/compound', (req, res) => {
   const lumpSumFV = P * Math.pow(1 + r / n, n * t);
   const monthlyRate = r / 12;
   const totalMonths = t * 12;
-  const annuityFV = monthlyRate > 0 
+  const annuityFV = monthlyRate > 0
     ? PMT * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate)
     : PMT * totalMonths;
 
