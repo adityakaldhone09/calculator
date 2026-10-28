@@ -8,12 +8,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.resolve(__dirname, '../dist');
 
+const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 const HOST = '0.0.0.0';
-
-app.listen(PORT, HOST, () => {
-  console.log(`CalcPulse server listening on ${HOST}:${PORT}`);
-});
 
 // Configurable CORS: allow all or explicit origins
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -49,11 +46,11 @@ const calculationHistory = [
   }
 ];
 
-// Health Check
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
   res.json({
-    status: 'online',
-    service: 'CalcPulse Backend API',
+    status: 'ok',
+    service: 'calcpulse',
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
@@ -211,7 +208,7 @@ app.post('/api/financial/compound', (req, res) => {
   const lumpSumFV = P * Math.pow(1 + r / n, n * t);
   const monthlyRate = r / 12;
   const totalMonths = t * 12;
-  const annuityFV = monthlyRate > 0
+  const annuityFV = monthlyRate > 0 
     ? PMT * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate)
     : PMT * totalMonths;
 
@@ -362,9 +359,20 @@ app.use('/api', (req, res) => {
 });
 
 // Production static assets & SPA fallback
-if (fs.existsSync(distPath)) {
+const distExists = fs.existsSync(distPath);
+
+if (distExists) {
   app.use(express.static(distPath));
 
+  // Static assets under /assets that are missing should return 404, not index.html
+  app.use('/assets', (req, res) => {
+    res.status(404).json({
+      error: 'Asset not found',
+      path: req.originalUrl || req.path
+    });
+  });
+
+  // Client-side routing fallback: serve index.html for GET/HEAD requests
   app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       return next();
@@ -390,13 +398,24 @@ app.use((err, req, res, _next) => {
   });
 });
 
+// Single app.listen() call with error handling and startup diagnostics
 let server = null;
 const isDirectRun = Boolean(process.argv[1] && path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]));
 
 if (isDirectRun && process.env.NODE_ENV !== 'test') {
   server = app.listen(PORT, HOST, () => {
-    console.log(`🚀 CalcPulse Server listening on http://${HOST}:${PORT}`);
+    console.log(`🚀 CalcPulse server listening on http://${HOST}:${PORT}`);
     console.log(`📡 Health endpoint: http://${HOST}:${PORT}/api/health`);
+    console.log(`📁 Static assets: ${distExists ? `loaded from ${distPath}` : 'MISSING (run npm run build)'}`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use by another process.`);
+    } else {
+      console.error('❌ Server startup error:', err);
+    }
+    process.exit(1);
   });
 }
 

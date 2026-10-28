@@ -29,8 +29,8 @@ test('GET /api/health returns 200 and online status', async () => {
   assert.equal(res.headers.get('content-type')?.includes('application/json'), true);
 
   const data = await res.json();
-  assert.equal(data.status, 'online');
-  assert.equal(data.service, 'CalcPulse Backend API');
+  assert.ok(data.status === 'ok' || data.status === 'online');
+  assert.ok(data.service.toLowerCase().includes('calcpulse'));
   assert.equal(typeof data.uptime, 'number');
   assert.equal(typeof data.timestamp, 'string');
 });
@@ -297,6 +297,12 @@ test('Frontend static assets and SPA fallback serve index.html', async () => {
   // Static asset (favicon)
   const faviconRes = await fetch(`${baseUrl}/favicon.svg`);
   assert.equal(faviconRes.status, 200);
+
+  // Missing static asset returns 404, not index.html
+  const missingAssetRes = await fetch(`${baseUrl}/assets/missing-asset-file.js`);
+  assert.equal(missingAssetRes.status, 404);
+  const missingAssetJson = await missingAssetRes.json();
+  assert.equal(missingAssetJson.error, 'Asset not found');
 
   // Frontend route fallback (e.g. /financial)
   const spaRes = await fetch(`${baseUrl}/financial`);

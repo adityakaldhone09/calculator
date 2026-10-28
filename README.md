@@ -230,8 +230,8 @@ node test/smoke.js
 - **Response Format**:
   ```json
   {
-    "status": "online",
-    "service": "CalcPulse Backend API",
+    "status": "ok",
+    "service": "calcpulse",
     "uptime": 124,
     "timestamp": "2026-10-28T19:15:00.000Z",
     "environment": "production"

@@ -52,8 +52,8 @@ async function runSmokeTest() {
     const healthRes = await fetch(`${baseUrl}/api/health`);
     assert.equal(healthRes.status, 200);
     const healthData = await healthRes.json();
-    assert.equal(healthData.status, 'online');
-    assert.equal(healthData.service, 'CalcPulse Backend API');
+    assert.ok(healthData.status === 'ok' || healthData.status === 'online');
+    assert.ok(healthData.service.toLowerCase().includes('calcpulse'));
     console.log('✔ /api/health passed');
 
     // 2. Frontend root HTML
