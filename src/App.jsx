@@ -53,14 +53,23 @@ export default function App() {
 
   // Load backend history on mount
   useEffect(() => {
+    let isMounted = true;
     fetch('/api/history')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        if (data.history && data.history.length > 0) {
+        if (isMounted && data && data.success && Array.isArray(data.history)) {
           setHistory(data.history);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.warn('Backend history unavailable on startup:', err.message);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const showToast = (message, type = 'info') => {
@@ -89,35 +98,58 @@ export default function App() {
     showToast(soundEnabled ? 'Tactile sounds muted' : 'Tactile sounds activated', 'info');
   };
 
-  const handleAddHistory = (item) => {
-    const entry = {
-      ...item,
-      id: Date.now() + Math.random().toString(36).substring(2, 6)
-    };
-    setHistory((prev) => [entry, ...prev.slice(0, 49)]); // keep up to 50 entries
+  const handleAddHistory = async (item) => {
+    try {
+      const res = await fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expression: item.expression,
+          result: item.result,
+          timestamp: item.timestamp
+        })
+      });
 
-    // Sync with backend API
-    fetch('/api/history', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        expression: item.expression,
-        result: item.result,
-        timestamp: item.timestamp
-      })
-    }).catch(() => {});
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data && data.success && data.entry) {
+        setHistory((prev) => [data.entry, ...prev.filter((h) => h.id !== data.entry.id).slice(0, 49)]);
+      }
+    } catch (err) {
+      showToast('Calculation computed, but could not be saved to server tape', 'error');
+      console.error('History persistence failed:', err);
+    }
   };
 
-  const handleClearHistory = () => {
-    setHistory([]);
-    fetch('/api/history', { method: 'DELETE' }).catch(() => {});
-    showToast('Calculation tape cleared', 'info');
+  const handleClearHistory = async () => {
+    try {
+      const res = await fetch('/api/history', { method: 'DELETE' });
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+      setHistory([]);
+      showToast('Calculation tape cleared', 'info');
+    } catch (err) {
+      showToast('Failed to clear calculation tape on server', 'error');
+      console.error('Clear history failed:', err);
+    }
   };
 
-  const handleDeleteHistoryItem = (id) => {
-    setHistory((prev) => prev.filter((item) => item.id !== id));
-    fetch(`/api/history/${id}`, { method: 'DELETE' }).catch(() => {});
-    showToast('Calculation entry removed', 'info');
+  const handleDeleteHistoryItem = async (id) => {
+    try {
+      const res = await fetch(`/api/history/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status}`);
+      }
+      setHistory((prev) => prev.filter((item) => item.id !== id));
+      showToast('Calculation entry removed', 'info');
+    } catch (err) {
+      showToast('Failed to delete calculation entry from server', 'error');
+      console.error('Delete history item failed:', err);
+    }
   };
 
   const handleSelectHistoryItem = (item) => {

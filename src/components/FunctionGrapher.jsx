@@ -7,9 +7,7 @@ import {
   Sparkles, 
   ArrowRight, 
   Sliders, 
-  Eye,
-  Table,
-  Layers
+  Table
 } from 'lucide-react';
 import { playKeyClick } from '../utils/audio';
 import './FunctionGrapher.css';
@@ -47,37 +45,67 @@ export default function FunctionGrapher({
   // Safe Math expression evaluator for f(x)
   const evaluateMath = useCallback((expr, x) => {
     try {
+      if (!expr || typeof expr !== 'string' || expr.length > 250) {
+        return NaN;
+      }
+
+      // Check allowed characters: digits, letters, basic math symbols and whitespace
+      if (!/^[0-9a-zA-Z_+\-*/^().,\s]+$/.test(expr)) {
+        return NaN;
+      }
+
+      // Token whitelist check: ensure all word tokens are allowed math terms
+      const tokens = expr.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+      const allowedIdentifiers = new Set([
+        'x', 'pi', 'e',
+        'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2',
+        'sinh', 'cosh', 'tanh',
+        'sqrt', 'cbrt', 'abs', 'ln', 'log', 'exp',
+        'ceil', 'floor', 'round', 'pow'
+      ]);
+
+      for (const token of tokens) {
+        if (!allowedIdentifiers.has(token.toLowerCase())) {
+          return NaN;
+        }
+      }
+
       let cleanExpr = expr.toLowerCase();
 
       // Replace functions and constants with Math.*
       cleanExpr = cleanExpr
-        .replace(/\bpi\b/g, `${Math.PI}`)
-        .replace(/\be\b/g, `${Math.E}`)
+        .replace(/\bpi\b/g, 'Math.PI')
+        .replace(/\be\b/g, 'Math.E')
         .replace(/\bsin\b/g, 'Math.sin')
         .replace(/\bcos\b/g, 'Math.cos')
         .replace(/\btan\b/g, 'Math.tan')
+        .replace(/\basin\b/g, 'Math.asin')
+        .replace(/\bacos\b/g, 'Math.acos')
+        .replace(/\batan\b/g, 'Math.atan')
+        .replace(/\bsinh\b/g, 'Math.sinh')
+        .replace(/\bcosh\b/g, 'Math.cosh')
+        .replace(/\btanh\b/g, 'Math.tanh')
         .replace(/\bsqrt\b/g, 'Math.sqrt')
+        .replace(/\bcbrt\b/g, 'Math.cbrt')
         .replace(/\babs\b/g, 'Math.abs')
         .replace(/\bln\b/g, 'Math.log')
         .replace(/\blog\b/g, 'Math.log10')
-        .replace(/\bexp\b/g, 'Math.exp');
+        .replace(/\bexp\b/g, 'Math.exp')
+        .replace(/\bceil\b/g, 'Math.ceil')
+        .replace(/\bfloor\b/g, 'Math.floor')
+        .replace(/\bround\b/g, 'Math.round');
 
       // Replace powers x^y with Math.pow
-      cleanExpr = cleanExpr.replace(/([a-zA-Z0-9_.\)]+)\s*\^\s*([a-zA-Z0-9_.\(]+)/g, 'Math.pow($1, $2)');
+      cleanExpr = cleanExpr.replace(/([a-zA-Z0-9_.)]+)\s*\^\s*([a-zA-Z0-9_.(]+)/g, 'Math.pow($1, $2)');
 
       // Replace implicit multiplications like 3x or 2sin
       cleanExpr = cleanExpr.replace(/(\d+)([a-zA-Z(])/g, '$1*$2');
       cleanExpr = cleanExpr.replace(/\)([a-zA-Z0-9(])/g, ')*$1');
 
-      // Sanitize tokens
-      if (!/^[0-9xX+\-*/%^().,\sMathsincotarqlgexp]+$/.test(cleanExpr)) {
-        return NaN;
-      }
-
       // Safe evaluation using Function
-      const fn = new Function('x', `return ${cleanExpr};`);
-      const val = fn(x);
-      return typeof val === 'number' && !isNaN(val) && isFinite(val) ? val : NaN;
+      const fn = new Function('x', 'Math', '"use strict"; return (' + cleanExpr + ');');
+      const val = fn(x, Math);
+      return typeof val === 'number' && Number.isFinite(val) ? val : NaN;
     } catch {
       return NaN;
     }
@@ -95,7 +123,6 @@ export default function FunctionGrapher({
 
     // Detect theme for colors
     const isLightTheme = document.documentElement.getAttribute('data-theme') === 'light';
-    const bgColor = isLightTheme ? '#f8fafc' : 'rgba(15, 23, 42, 0.4)';
     const gridColor = isLightTheme ? 'rgba(148, 163, 184, 0.25)' : 'rgba(255, 255, 255, 0.08)';
     const axisColor = isLightTheme ? 'rgba(71, 85, 105, 0.7)' : 'rgba(255, 255, 255, 0.45)';
     const textColor = isLightTheme ? '#475569' : '#94a3b8';

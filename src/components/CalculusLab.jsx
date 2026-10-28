@@ -15,6 +15,31 @@ import './CalculusLab.css';
 // Safe Math expression evaluator for f(x)
 function evaluateMath(expr, x) {
   try {
+    if (!expr || typeof expr !== 'string' || expr.length > 250) {
+      return null;
+    }
+
+    // Check allowed characters: digits, letters, basic math symbols and whitespace
+    if (!/^[0-9a-zA-Z_+\-*/^().,\s]+$/.test(expr)) {
+      return null;
+    }
+
+    // Token whitelist check: ensure all word tokens are allowed math terms
+    const tokens = expr.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+    const allowedIdentifiers = new Set([
+      'x', 'pi', 'e',
+      'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2',
+      'sinh', 'cosh', 'tanh',
+      'sqrt', 'cbrt', 'abs', 'ln', 'log', 'exp',
+      'ceil', 'floor', 'round', 'pow'
+    ]);
+
+    for (const token of tokens) {
+      if (!allowedIdentifiers.has(token.toLowerCase())) {
+        return null;
+      }
+    }
+
     let clean = expr.toLowerCase().trim();
     // Replace powers
     clean = clean.replace(/\^/g, '**');
@@ -25,17 +50,30 @@ function evaluateMath(expr, x) {
     clean = clean.replace(/\bsin\b/g, 'Math.sin');
     clean = clean.replace(/\bcos\b/g, 'Math.cos');
     clean = clean.replace(/\btan\b/g, 'Math.tan');
+    clean = clean.replace(/\basin\b/g, 'Math.asin');
+    clean = clean.replace(/\bacos\b/g, 'Math.acos');
+    clean = clean.replace(/\batan\b/g, 'Math.atan');
+    clean = clean.replace(/\bsinh\b/g, 'Math.sinh');
+    clean = clean.replace(/\bcosh\b/g, 'Math.cosh');
+    clean = clean.replace(/\btanh\b/g, 'Math.tanh');
     clean = clean.replace(/\bsqrt\b/g, 'Math.sqrt');
+    clean = clean.replace(/\bcbrt\b/g, 'Math.cbrt');
     clean = clean.replace(/\babs\b/g, 'Math.abs');
     clean = clean.replace(/\bln\b/g, 'Math.log');
     clean = clean.replace(/\blog\b/g, 'Math.log10');
     clean = clean.replace(/\bexp\b/g, 'Math.exp');
+    clean = clean.replace(/\bceil\b/g, 'Math.ceil');
+    clean = clean.replace(/\bfloor\b/g, 'Math.floor');
+    clean = clean.replace(/\bround\b/g, 'Math.round');
 
-    // Create safe function
-    // eslint-disable-next-line no-new-func
-    const fn = new Function('x', 'Math', `return (${clean});`);
+    // Handle implicit multiplications
+    clean = clean.replace(/(\d+)([a-zA-Z(])/g, '$1*$2');
+    clean = clean.replace(/\)([a-zA-Z0-9(])/g, ')*$1');
+
+    // Create safe strict function
+    const fn = new Function('x', 'Math', '"use strict"; return (' + clean + ');');
     const val = fn(x, Math);
-    return typeof val === 'number' && !isNaN(val) && isFinite(val) ? val : null;
+    return typeof val === 'number' && Number.isFinite(val) ? val : null;
   } catch {
     return null;
   }

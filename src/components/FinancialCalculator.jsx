@@ -4,10 +4,8 @@ import {
   TrendingUp, 
   Receipt, 
   ArrowRight, 
-  Percent, 
   Calendar, 
   Users, 
-  RotateCcw,
   Sparkles,
   PieChart
 } from 'lucide-react';
